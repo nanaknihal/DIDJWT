@@ -1,5 +1,6 @@
 # WTFBRO ID
 Web Token Forwarded Blockchain Read-Only ID
+
 *Goal*:
 Link a public key to an online account with OpenID
 

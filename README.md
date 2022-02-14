@@ -5,7 +5,7 @@ Link a public key to an online account with OpenID
 *Solution*: 
 Verify a JWT on-chain without compromising user security
 
-###Insecure, simple way:
+### Insecure, simple way:
 
 1. Request an `id_token` (NOT an `acces_token` which would grant priviliges and should not be shared)
 2. Send the `id_token` to a smart contract
@@ -13,7 +13,7 @@ Verify a JWT on-chain without compromising user security
 
 This is prone to front-running; the access token is in the mempool and can be submitted from another address, authenticating the other address as the original user
 
-###Secure way:
+### Secure way:
 Two-block transaction so it cannot be front-run
 
 **Before transaction**

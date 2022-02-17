@@ -19,6 +19,9 @@ contract VerifyJWT {
 
     bytes32[] public pendingVerification; //unneeded later, just for testing purposes
     bytes32[] public verifiedUsers;
+
+    // event SignatureVerificationStatus(address from_, string jwt_ , bool status_);
+    event modExpEventForTesting(uint256 result_);
     // function verify(uint256 base_length, uint256 exponent_length, uint256 modulus_length, bytes memory base, bytes memory exponent, bytes memory modulus){
     //   assembly {
     //   // call ecmul precompile
@@ -106,10 +109,12 @@ contract VerifyJWT {
             result := mload(value)
             // return(result, 32)
         }
+        emit modExpEventForTesting(result);
         return result;
     }
 
-    function _verifyJWT(uint256 _b, uint256 _e, uint256 _m, uint256 _message) private returns (bool) {
+    // Made public for testing, ideally should be private
+    function _verifyJWT(uint256 _b, uint256 _e, uint256 _m, uint256 _message) public returns (bool) {
       uint256 decrypted = modExp(_b, _e, _m);
       console.log('result is ', decrypted);
       bool verified = decrypted == _message;
@@ -136,26 +141,26 @@ contract VerifyJWT {
   // perhaps make private, but need it to be public to test
   function checkJWTProof(address a, string memory jwt) public view returns (bool) {
     bytes32 bytes32Pubkey = bytesToFirst32BytesAsBytes32Type(addressToBytes(a));
-    console.log("address version:");
-    console.log(a);
-    console.logBytes(addressToBytes(a));
-    console.logBytes32(bytes32Pubkey);
-    console.log("^bytes32 version");
+    // console.log("address version:");
+    // console.log(a);
+    // console.logBytes(addressToBytes(a));
+    // console.logBytes32(bytes32Pubkey);
+    // console.log("^bytes32 version");
     
     // check whether sender has already proved knowledge of the jwt in a previous block by XORing it with their public key and SHA2 of JWT. 
     // CANNOT use same encryption algorithm that jp.hashedJWT is stored with; that would cause an attack vector:
     // hash(JWT) would be known, so then XOR(public key, hash(JWT)) can be replaced with XOR(frontrunner pubkey, hash(JWT)) by a frontrunner
     bytes32 k = bytes32Pubkey ^ sha256(stringToBytes(jwt));
-    console.logBytes32(pendingVerification[pendingVerification.length - 1]);
-    console.log("looking up key");
-    console.log("key is pendingVerification[pendingVerification.length - 1]?", k == pendingVerification[pendingVerification.length - 1]);
-    console.logBytes32(k);
-    console.logBytes32(pendingVerification[pendingVerification.length - 1]);
-    console.logBytes32(k ^ pendingVerification[pendingVerification.length - 1]);
+    // console.logBytes32(pendingVerification[pendingVerification.length - 1]);
+    // console.log("looking up key");
+    // console.log("key is pendingVerification[pendingVerification.length - 1]?", k == pendingVerification[pendingVerification.length - 1]);
+    // console.logBytes32(k);
+    // console.logBytes32(pendingVerification[pendingVerification.length - 1]);
+    // console.logBytes32(k ^ pendingVerification[pendingVerification.length - 1]);
     JWTProof memory jp = jwtProofs[k];
     // console.logBytes32(jp.hashedJWT);
-    console.logBytes32(k);
-    // console.log(keccak256(stringToBytes(jwt)));
+    // console.logBytes32(k);
+    console.logBytes32(keccak256(stringToBytes(jwt)));
     console.log("JWT argument", jwt);
     console.log("Block number", jp.blockNumber);
     console.log("hashedJWT is: "); console.logBytes32(jp.hashedJWT);

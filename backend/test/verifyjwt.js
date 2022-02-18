@@ -18,21 +18,10 @@ describe('modExp works', function () {
   it('Test modExp on some simple numbers', async function () {
     const [owner] = await ethers.getSigners();
     let vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(58,230)
-    await expect(vjwt.modExp(75,1,8001)).to.emit(vjwt, 'modExpEventForTesting').withArgs(75);
-    await expect(vjwt.modExp(5,5,5)).to.emit(vjwt, 'modExpEventForTesting').withArgs(0);
-    await expect(vjwt.modExp(0,1,6)).to.emit(vjwt, 'modExpEventForTesting').withArgs(0);
-    await expect(vjwt.modExp(5,2,23)).to.emit(vjwt, 'modExpEventForTesting').withArgs(2);
-  });
-});
-
-describe('modExp works', function () {
-  it('Test modExp on some simple numbers', async function () {
-    const [owner] = await ethers.getSigners();
-    let vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(11,230)
-    await expect(vjwt.modExp(75,1,8001)).to.emit(vjwt, 'modExpEventForTesting').withArgs(75);
-    await expect(vjwt.modExp(5,5,5)).to.emit(vjwt, 'modExpEventForTesting').withArgs(0);
-    await expect(vjwt.modExp(0,1,6)).to.emit(vjwt, 'modExpEventForTesting').withArgs(0);
-    await expect(vjwt.modExp(5,2,23)).to.emit(vjwt, 'modExpEventForTesting').withArgs(2);
+    await expect(vjwt.modExp(0x004b,1,8001)).to.emit(vjwt, 'modExpEventForTesting').withArgs('0x004b');
+    await expect(vjwt.modExp(5,5,5)).to.emit(vjwt, 'modExpEventForTesting').withArgs('0x00');
+    await expect(vjwt.modExp(0,1,6)).to.emit(vjwt, 'modExpEventForTesting').withArgs('0x00');
+    await expect(vjwt.modExp(5,2,23)).to.emit(vjwt, 'modExpEventForTesting').withArgs('0x02');
   });
 });
 
@@ -46,7 +35,7 @@ describe('Verify test RSA signatures', function () {
     orig.split('&').map(x=>{let [key, value] = x.split('='); parsedToJSON[key] = value});
     let [headerRaw, payloadRaw, signatureRaw] = parsedToJSON['id_token'].split('.');
     // let [header, payload] = [headerRaw, payloadRaw].map(x => JSON.parse(atob(x)));
-    let signature = [Buffer.from(signatureRaw, 'base64url')]
+    let [signature] = [Buffer.from(signatureRaw, 'base64url')]
     console.log(headerRaw + '.' + payloadRaw);
     const pubkey = JSON.parse('{"keys":[{"kty":"RSA","e":"AQAB","use":"sig","kid":"production-orcid-org-7hdmdswarosg3gjujo8agwtazgkp1ojs","n":"jxTIntA7YvdfnYkLSN4wk__E2zf_wbb0SV_HLHFvh6a9ENVRD1_rHK0EijlBzikb-1rgDQihJETcgBLsMoZVQqGj8fDUUuxnVHsuGav_bf41PA7E_58HXKPrB2C0cON41f7K3o9TStKpVJOSXBrRWURmNQ64qnSSryn1nCxMzXpaw7VUo409ohybbvN6ngxVy4QR2NCC7Fr0QVdtapxD7zdlwx6lEwGemuqs_oG5oDtrRuRgeOHmRps2R6gG5oc-JqVMrVRv6F9h4ja3UgxCDBQjOVT1BFPWmMHnHCsVYLqbbXkZUfvP2sO1dJiYd_zrQhi-FtNth9qrLLv3gkgtwQ"}]}')
     const [e, n] = [
@@ -54,14 +43,16 @@ describe('Verify test RSA signatures', function () {
       Buffer.from(pubkey.keys[0]['n'])
       // ethers.BigNumber.from(Buffer.from(pubkey.keys[0]['n'], 'base64url'))
     ]
-    let asfasfasdfasd = await (await ethers.getContractFactory('VerifyJWT')).deploy(10,10);
-    console.log('uint version', await asfasfasdfasd.bytes32ToUInt256(n))
-    console.log('length', (Buffer.from(pubkey.keys[0]['n'], 'base64url')).length)
-    console.log(ethers.BigNumber.from(Buffer.from(pubkey.keys[0]['n'], 'base64url')))
+    let vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(e,n);
+    // console.log('uint version', await asfasfasdfasd.bytes32ToUInt256(n))
+    // console.log('length', (Buffer.from(pubkey.keys[0]['n'], 'base64url')).length)
+    // console.log(ethers.BigNumber.from(Buffer.from(pubkey.keys[0]['n'], 'base64url')))
 
-    console.log(e, n)
-    // const vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(e,n)
-    // console.log(await vjwt.verifyJWT(signature, headerRaw + '.' + payloadRaw), 'payload etc.')
+    // console.log(e, n)
+    // console.log(ethers.BigNumber.from(signature))
+    // console.log(signature.toString(16))
+    // console.log(Buffer.from(signatureRaw, 'base64url').toString('hex'))
+    await expect(vjwt.verifyJWT(ethers.BigNumber.from(signature), headerRaw + '.' + payloadRaw)).to.emit(vjwt, 'Verification').withArgs(true);
   });
 })
 

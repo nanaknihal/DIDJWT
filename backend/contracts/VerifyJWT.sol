@@ -12,16 +12,15 @@ contract VerifyJWT {
     mapping(string => address) public addressForCreds;
     mapping(bytes32 => JWTProof) public jwtProofs;
 
-    // web2 server's RS256 public key, split into base, exponent, and modulus
-    uint256 public b;
-    uint256 public e;
-    uint256 public m;
+    // web2 server's RS256 public key, split into exponent and modulus
+    bytes32 public e;
+    bytes public n;
 
     bytes32[] public pendingVerification; //unneeded later, just for testing purposes
     bytes32[] public verifiedUsers;
 
     // event SignatureVerificationStatus(address from_, string jwt_ , bool status_);
-    event modExpEventForTesting(uint256 result_);
+    event modExpEventForTesting(bytes32 result_);
     // function verify(uint256 base_length, uint256 exponent_length, uint256 modulus_length, bytes memory base, bytes memory exponent, bytes memory modulus){
     //   assembly {
     //   // call ecmul precompile
@@ -30,14 +29,11 @@ contract VerifyJWT {
     //   }
     // }
     // }
-    constructor(uint256 base, uint256 exponent, uint256 modulus){
-      b = base;
-      exponent = exponent;
-      modulus = modulus;
+    constructor(bytes32 exponent, bytes memory modulus){
+      e = exponent;
+      n = modulus;
     }
-    function testFunction(uint256 newE) public {
-      e = newE;
-    }
+
     // Why am i putting test functions here haha
     function testAddressByteConversion(address a) public pure returns (bool) {
       return bytesToAddress(addressToBytes(a)) == a;
@@ -53,6 +49,12 @@ contract VerifyJWT {
     function bytes32ToAddress(bytes32 b_) private pure returns (address addr) {
       assembly {
         addr := mload(add(b_,20)) //shouldn't it be 0x20 or is that equivalent
+      } 
+    }
+
+    function bytes32ToUInt256(bytes32 b_) public pure returns (uint256 u_) {
+      assembly {
+        u_ := mload(add(b_,20)) //shouldn't it be 0x20 or is that equivalent
       } 
     }
 
@@ -83,20 +85,18 @@ contract VerifyJWT {
       console.logBytes(bytes32ToBytes(b_));
     }
     // https://ethereum.stackexchange.com/questions/71565/verifying-modular-exponentiation-operation-in-etherum
-    function modExp(uint256 _b, uint256 _e, uint256 _m) public returns (uint256 result) {
+    function modExp(bytes32 _b, bytes32 _e, bytes memory _m) public returns (bytes32 result) {
         assembly {
-            // Free memory pointer
             let pointer := mload(0x40)
-
             // Define length of base, exponent and modulus. 0x20 == 32 bytes
             mstore(pointer, 0x20)
             mstore(add(pointer, 0x20), 0x20)
-            mstore(add(pointer, 0x40), 0x20)
+            mstore(add(pointer, 0x40), 0x100)
 
             // Define variables base, exponent and modulus
-            mstore(add(pointer, 0x60), _b)
-            mstore(add(pointer, 0x80), _e)
-            mstore(add(pointer, 0xa0), _m)
+            mstore(add(pointer, 0x120), _b)
+            mstore(add(pointer, 0x140), _e)
+            mstore(add(pointer, 0x160), _m)
 
             // Store the result
             let value := mload(0xc0)
@@ -114,10 +114,10 @@ contract VerifyJWT {
     }
 
     // Made public for testing, ideally should be private
-    function _verifyJWT(uint256 _b, uint256 _e, uint256 _m, uint256 _message) public returns (bool) {
-      uint256 decrypted = modExp(_b, _e, _m);
-      console.log('result is ', decrypted);
-      bool verified = decrypted == _message;
+    function _verifyJWT(bytes32 e_, bytes memory n_, bytes32 signature_, bytes32 message_) public returns (bool) {
+      bytes32 decrypted = modExp(signature_, e_, n_);
+      // console.log('result is ', decrypted);
+      bool verified = decrypted == message_;
       // if(verified){
       //   credsForAddress[msg.sender] = message;
       //   addressForCreds[message] = msg.sender;
@@ -125,8 +125,8 @@ contract VerifyJWT {
       return verified;
     }
     
-    function verifyJWT(string memory jwt) public returns (bool) {
-      return _verifyJWT(b, e, m, uint(keccak256(stringToBytes(jwt))));
+    function verifyJWT(bytes32 signature, string memory jwt) public returns (bool) {
+      return _verifyJWT(e, n, signature, keccak256(stringToBytes(jwt)));
     }
 
     function commitJWTProof(bytes32 jwtXORPubkey, bytes32 jwtHash) public {
@@ -169,9 +169,9 @@ contract VerifyJWT {
     return true;
   }
 
-  function verifyMe(string memory jwt) public returns (bool) {
+  function verifyMe(bytes32 signature, string memory jwt) public returns (bool) {
     // check whether JWT is valid 
-    require(verifyJWT(jwt),"Verification of JWT failed");
+    require(verifyJWT(signature, jwt),"Verification of JWT failed");
     // check whether sender has already proved knowledge of the jwt
     require(checkJWTProof(msg.sender, jwt), "Proof of previous knowlege of JWT unsuccessful");
   }

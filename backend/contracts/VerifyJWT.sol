@@ -20,7 +20,8 @@ contract VerifyJWT {
     bytes32[] public verifiedUsers;
 
     event modExpEventForTesting(bytes result_);
-    event Verification(bool result_);
+    event JWTVerification(bool result_);
+    event KeyAuthorization(bool result_);
     // function verify(uint256 base_length, uint256 exponent_length, uint256 modulus_length, bytes memory base, bytes memory exponent, bytes memory modulus){
     //   assembly {
     //   // call ecmul precompile
@@ -161,7 +162,7 @@ contract VerifyJWT {
       //   credsForAddress[msg.sender] = message;
       //   addressForCreds[message] = msg.sender;
       // }
-      emit Verification(verified);
+      emit JWTVerification(verified);
       return verified;
     }
     
@@ -220,6 +221,8 @@ contract VerifyJWT {
     require(verifyJWT(signature, jwt),"Verification of JWT failed");
     // check whether sender has already proved knowledge of the jwt
     require(checkJWTProof(msg.sender, jwt), "Proof of previous knowlege of JWT unsuccessful");
+    emit KeyAuthorization(true);
+    
   }
 
   // kind of a hack; this view function is just for the frontend to call because it's easier to write code to XOR uint256s in Solidity than JS...idieally, this is done in browser

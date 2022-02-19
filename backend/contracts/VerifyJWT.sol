@@ -68,30 +68,12 @@ contract VerifyJWT {
 
     // We need to take the last 32 bytes to obtain the sha256 hash from the the PKCS1-v1_5 padding
     function bytesToLast32BytesAsBytes32Type(bytes memory input_) public view returns (bytes32 b_) {
-      uint256 inputStart;
-      uint256 len;
-      uint256 end;
-      uint256 retvalStart; 
       assembly {
         // there is probably an easier way to do this
-        inputStart := input_
-        len := mload(input_)
-        end := add(input_, len)
-        retvalStart := end
+        let len := mload(input_)
+        let end := add(input_, len)
         b_ := mload(end)
       }
-      console.log("input_");
-      console.logBytes(input_);
-      console.log("len");
-      console.log(len);
-      console.log("end");
-      console.log(end);
-      console.log("b_");
-      console.logBytes32(b_);
-      console.log("retvalStart");
-      console.log(retvalStart);
-      console.log("inputStart");
-      console.log(inputStart);
     }
     
     function addressToBytes(address a) public pure returns (bytes memory) {
@@ -164,14 +146,17 @@ contract VerifyJWT {
     
     // Made public for testing, ideally should be private
     function _verifyJWT(uint256 e_, bytes memory n_, bytes memory signature_, bytes memory message_) public returns (bool) {
-      bytes32 decrypted = bytesToFirst32BytesAsBytes32Type(modExp(signature_, e_, n_));
+      bytes memory decrypted = modExp(signature_, e_, n_);
+      bytes32 unpadded = bytesToLast32BytesAsBytes32Type(decrypted);
       console.logBytes(modExp(signature_, e_, n_));
       console.log("decrypted");
-      console.logBytes32(decrypted);
-      console.log("keccak256(message_)");
+      console.logBytes(decrypted);
+      console.log("unpadded");
+      console.logBytes32(unpadded);
+      console.log("sha256(message_)");
       console.logBytes32(sha256(message_));
       // console.log('result is ', decrypted);
-      bool verified = decrypted == sha256(message_);
+      bool verified = unpadded == sha256(message_);
       // if(verified){
       //   credsForAddress[msg.sender] = message;
       //   addressForCreds[message] = msg.sender;

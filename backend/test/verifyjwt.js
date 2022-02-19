@@ -26,8 +26,13 @@ describe('modExp works', function () {
 });
 
 describe('Verify test RSA signatures', function () {
-  it('Verify with some plaintext', async function () {
-    
+  it('Verify with example values from https://travistidwell.com/jsencrypt/demo/', async function () {
+    // const privkey = ethers.BigNumber.from(
+    //   Buffer.from('MIIEpAIBAAKCAQEAw2KfiUVLf8tpXp2g1kFWVkKOi0pKfp7FSmOwW1cugrQda7rAIUz4MQ1fFrI4h+52/tLZuavesYoTeoPVI6DEjMsHFyqb/R8raP5dPxdqxAYoAaBmPZKH2FOcREbN1WlAANnyCY01uwjp0jeE9xhaBpLmYlXTBlmu+08p8dOB/BX00wTR9aheoQfcjDpshxYhZ03al69uwZnQFFpO07zkc+bDbGvbrdQyPNmW9GvOCFmg8VfDxDsREA5ont7JbeN41trYDuQXlw14wL8PtX1/4a+rtuur8iTgjHsf+2p8yy4bjFEF+wA/65qw7WmqBfCpph55l8RWTrWcoq7sch/MVQIDAQABAoIBAQCbmAhwKozLQlOxE1ooBXQZ0XrulcTpPMrkSKsCslTJpWHgjqG+Yysq9PkKe/bk2RROLd9RKvt26vxEDoRHkRm0/WGyIy6BzralMBtVyPIvFK/7S57f3bbsoPjKro/wKZbclrNWw+tL/PcnfysWE4Btx8JMAQjB/92HKC3A9KyI8BZ+nIbf70aCsmy86Jt/i6YUTqyL7Ku63aBklr02E/dXfmQ4WKOXkNbxCja2nSzeOxbmdW+fz3KQwEadh/ojYAFi0HQ1w9W0QCc/QjH14jqs3w2w4DfqpNFFMu4TtvqUd2Z1/XzofCNE+WDzt2aEGy6LU5OMcRz29UIiqSq99RCBAoGBAOxJFio1iOYR6g00UUAGoKEWZjy12j+ye/QNcueFA3c0I2GnUxLYkF5iyEQRaiUgLbTrDQIV4qyilWu2fvhQZB5NjVzFOJPG0AdVzee3mKtaZ11o+YIZlwK5IoO1W8+IJnsHQA1GbLy+iu8UWfRXuru9Uiyx/7u5sXEPSCsv8rdxAoGBANOv7q/uFV+6svV1sDaTg8lxOdy22Qp9DdpKG9m2GX389NFFL5B4ynY0BcS4tHmOM5GG1bgcII9bR7lBu8U/eElYO3b/5XAEDIgDhkRVV48a9VZb7RPs6rErQV0Sjs7L0yguAoa9OUnHv1AkG8Z1ZA3g8Hx/PzxQgoMGeEx2FVklAoGAUFIP7M1B+iOA0nhEXmViWSAKJP0Uca60oCOqObVnli/tDxcYEEH54Xvm4+yfjns/zk5Qn7Lc2R5zeKgSxUpenkZylWSddO6SbMvoMKqihS04EfLLTkRwpwZUCz2tNgDsQ8oVJe4YrJiBFgBvC7Z+za7vri3b5u6auPoe6D9mXKECgYAGTUN+y0ipm+Y99m3zgfq3YX6Geo8Fh+mEqRYhKhGiNYiYPkYHOAFW+X9+dr0wrTIN0ATGwVeazO3arwFHAveyv0St6zpKVmSFHA3ANQYxRW0uT/hD0pa+BXqhqa7Eqz6zAIOkvTdaYe7pFNoa013SJ/Mg0azxP7hS7Dtik1VZXQKBgQDHZh9nmLzcy1eiE1wrti0Wdy1K9VKG2jHbcG9KKXZHUbgEVENpzC14PzLr4L1eg4lgQ8z9bz3cm0Is35u7p85QHDnS2UpePLkLn5jwftlofpAvKFxiA/2552PZCyRQyCiA/4WXwwjfczJMMRMNQ3JY8z4qLszhXbrUoQiSdgUAEA==',
+    //               'base64')
+    // )
+
+    // const pubkey = 
   });
   it('Verify with a real JWT', async function () {
     const orig = 'access_token=117a16aa-f766-4079-ba50-faaf0a09c864&token_type=bearer&expires_in=599&tokenVersion=1&persistent=true&id_token=eyJraWQiOiJwcm9kdWN0aW9uLW9yY2lkLW9yZy03aGRtZHN3YXJvc2czZ2p1am84YWd3dGF6Z2twMW9qcyIsImFsZyI6IlJTMjU2In0.eyJhdF9oYXNoIjoiX1RCT2VPZ2VZNzBPVnBHRWNDTi0zUSIsImF1ZCI6IkFQUC1NUExJMEZRUlVWRkVLTVlYIiwic3ViIjoiMDAwMC0wMDAyLTIzMDgtOTUxNyIsImF1dGhfdGltZSI6MTY0NDgzMDE5MSwiaXNzIjoiaHR0cHM6XC9cL29yY2lkLm9yZyIsImV4cCI6MTY0NDkxODUzNywiZ2l2ZW5fbmFtZSI6Ik5hbmFrIE5paGFsIiwiaWF0IjoxNjQ0ODMyMTM3LCJmYW1pbHlfbmFtZSI6IktoYWxzYSIsImp0aSI6IjcxM2RjMGZiLTMwZTAtNDM0Mi05ODFjLTNlYjJiMTRiODM0OCJ9.VXNSFbSJSdOiX7n-hWB6Vh30L1IkOLiNs2hBTuUDZ4oDB-cL6AJ8QjX7wj9Nj_lGcq1kjIfFLhowo8Jy_mzMGIFU8KTZvinSA-A-tJkXOUEvjUNjd0OfQJnVVJ63wvp9gSEj419HZ13Lc2ci9CRY7efQCYeelvQOQvpdrZsRLiQ_XndeDw2hDLAmI7YrYrLMy1zQY9rD4uAlBa56RVD7me6t47jEOOJJMAs3PC8UZ6pYyNc0zAjQ8Vapqz7gxeCN-iya91YI1AIE8Ut19hGgVRa9N7l-aUielPAlzss0Qbeyvl0KTRuZWnLUSrOz8y9oGxVBCUmStEOrVrAhmkMS8A&tokenId=254337461'
@@ -40,7 +45,7 @@ describe('Verify test RSA signatures', function () {
     const pubkey = JSON.parse('{"keys":[{"kty":"RSA","e":"AQAB","use":"sig","kid":"production-orcid-org-7hdmdswarosg3gjujo8agwtazgkp1ojs","n":"jxTIntA7YvdfnYkLSN4wk__E2zf_wbb0SV_HLHFvh6a9ENVRD1_rHK0EijlBzikb-1rgDQihJETcgBLsMoZVQqGj8fDUUuxnVHsuGav_bf41PA7E_58HXKPrB2C0cON41f7K3o9TStKpVJOSXBrRWURmNQ64qnSSryn1nCxMzXpaw7VUo409ohybbvN6ngxVy4QR2NCC7Fr0QVdtapxD7zdlwx6lEwGemuqs_oG5oDtrRuRgeOHmRps2R6gG5oc-JqVMrVRv6F9h4ja3UgxCDBQjOVT1BFPWmMHnHCsVYLqbbXkZUfvP2sO1dJiYd_zrQhi-FtNth9qrLLv3gkgtwQ"}]}')
     const [e, n] = [
       ethers.BigNumber.from(Buffer.from(pubkey.keys[0]['e'], 'base64url')), 
-      Buffer.from(pubkey.keys[0]['n'])
+      Buffer.from(pubkey.keys[0]['n'], 'base64url')
       // ethers.BigNumber.from(Buffer.from(pubkey.keys[0]['n'], 'base64url'))
     ]
     let vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(e,n);
@@ -52,6 +57,8 @@ describe('Verify test RSA signatures', function () {
     // console.log(ethers.BigNumber.from(signature))
     // console.log(signature.toString(16))
     // console.log(Buffer.from(signatureRaw, 'base64url').toString('hex'))
+    console.log(ethers.BigNumber.from(signature))
+    console.log(signature)
     await expect(vjwt.verifyJWT(ethers.BigNumber.from(signature), headerRaw + '.' + payloadRaw)).to.emit(vjwt, 'Verification').withArgs(true);
   });
 })

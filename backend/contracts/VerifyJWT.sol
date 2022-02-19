@@ -68,7 +68,7 @@ contract VerifyJWT {
     }
 
     // We need to take the last 32 bytes to obtain the sha256 hash from the the PKCS1-v1_5 padding
-    function bytesToLast32BytesAsBytes32Type(bytes memory input_) public view returns (bytes32 b_) {
+    function bytesToLast32BytesAsBytes32Type(bytes memory input_) public pure returns (bytes32 b_) {
       assembly {
         // there is probably an easier way to do this
         let len := mload(input_)
@@ -91,7 +91,7 @@ contract VerifyJWT {
     function stringToBytes(string memory s) public pure returns (bytes memory) {
       return abi.encodePacked(s);
     }
-    // logging function to support bytes32, which hardhat doesn't support
+    // logging function to support bytes32
     function logBytes32(bytes32 b_) internal view {
       console.logBytes(bytes32ToBytes(b_));
     }
@@ -138,10 +138,7 @@ contract VerifyJWT {
             // Return p
             o := p
         }
-        console.log("o is");
-        console.logBytes(o);
-        console.log("o ends with");
-        console.logBytes32(bytesToLast32BytesAsBytes32Type(o));
+        
         emit modExpEventForTesting(o);
     }
     
@@ -149,36 +146,16 @@ contract VerifyJWT {
     function _verifyJWT(uint256 e_, bytes memory n_, bytes memory signature_, bytes memory message_) public returns (bool) {
       bytes memory decrypted = modExp(signature_, e_, n_);
       bytes32 unpadded = bytesToLast32BytesAsBytes32Type(decrypted);
-      console.logBytes(modExp(signature_, e_, n_));
-      console.log("decrypted");
-      console.logBytes(decrypted);
-      console.log("unpadded");
-      console.logBytes32(unpadded);
-      console.log("sha256(message_)");
-      console.logBytes32(sha256(message_));
-      // console.log('result is ', decrypted);
       bool verified = unpadded == sha256(message_);
-      // if(verified){
-      //   credsForAddress[msg.sender] = message;
-      //   addressForCreds[message] = msg.sender;
-      // }
       emit JWTVerification(verified);
       return verified;
     }
     
     function verifyJWT(bytes memory signature, string memory jwt) public returns (bool) {
-      console.log("modulus is");
-      console.logBytes(n);
-      console.log("exponent is");
-      console.log(e);
-      console.log("signature is");
-      console.logBytes(signature);
       return _verifyJWT(e, n, signature, stringToBytes(jwt));
     }
 
     function commitJWTProof(bytes32 jwtXORPubkey, bytes32 jwtHash) public {
-      // console.logBytes32(jwtXORPubkey);
-      // console.log("that was key");
       jwtProofs[jwtXORPubkey] = JWTProof({
         blockNumber: block.number, 
         hashedJWT: jwtHash
@@ -188,41 +165,27 @@ contract VerifyJWT {
   // perhaps make private, but need it to be public to test
   function checkJWTProof(address a, string memory jwt) public view returns (bool) {
     bytes32 bytes32Pubkey = bytesToFirst32BytesAsBytes32Type(addressToBytes(a));
-    // console.log("address version:");
-    // console.log(a);
-    // console.logBytes(addressToBytes(a));
-    // console.logBytes32(bytes32Pubkey);
-    // console.log("^bytes32 version");
     
     // check whether sender has already proved knowledge of the jwt in a previous block by XORing it with their public key and SHA2 of JWT. 
     // CANNOT use same encryption algorithm that jp.hashedJWT is stored with; that would cause an attack vector:
     // hash(JWT) would be known, so then XOR(public key, hash(JWT)) can be replaced with XOR(frontrunner pubkey, hash(JWT)) by a frontrunner
     bytes32 k = bytes32Pubkey ^ sha256(stringToBytes(jwt));
-    // console.logBytes32(pendingVerification[pendingVerification.length - 1]);
-    // console.log("looking up key");
-    // console.log("key is pendingVerification[pendingVerification.length - 1]?", k == pendingVerification[pendingVerification.length - 1]);
-    // console.logBytes32(k);
-    // console.logBytes32(pendingVerification[pendingVerification.length - 1]);
-    // console.logBytes32(k ^ pendingVerification[pendingVerification.length - 1]);
+
     JWTProof memory jp = jwtProofs[k];
-    // console.logBytes32(jp.hashedJWT);
-    // console.logBytes32(k);
-    console.logBytes32(keccak256(stringToBytes(jwt)));
-    // console.log("JWT argument", jwt);
-    // console.log("Block number", jp.blockNumber);
-    // console.log("hashedJWT is: "); console.logBytes32(jp.hashedJWT);
+
     require(jp.blockNumber < block.number, "You need to prove knowledge of JWT in a previous block, otherwise you can be frontrun");
     require(jp.hashedJWT == keccak256(stringToBytes(jwt)), "JWT does not match JWT in proof");
     return true;
   }
 
-  function verifyMe(bytes memory signature, string memory jwt) public returns (bool) {
+  function verifyMe(bytes memory signature, string memory jwt) public {
     // check whether JWT is valid 
     require(verifyJWT(signature, jwt),"Verification of JWT failed");
     // check whether sender has already proved knowledge of the jwt
     require(checkJWTProof(msg.sender, jwt), "Proof of previous knowlege of JWT unsuccessful");
     emit KeyAuthorization(true);
-    
+    addressForCreds[jwt] = msg.sender;
+    credsForAddress[msg.sender] = jwt;
   }
 
   // kind of a hack; this view function is just for the frontend to call because it's easier to write code to XOR uint256s in Solidity than JS...idieally, this is done in browser

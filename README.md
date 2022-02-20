@@ -7,6 +7,7 @@ Link a public key to an online account with OpenID
 *Solution*: 
 Verify a JWT on-chain without compromising user security
 
+Youtube video about the protocol https://youtu.be/MmR9bhULpxE
 ### Insecure, simple way:
 
 1. Request an `id_token` (NOT an `acces_token` which would grant priviliges and should not be shared)

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
-
+import "contracts/Base64.sol"; 
 contract VerifyJWT {
     struct JWTProof {
       uint256 blockNumber;
@@ -15,6 +15,13 @@ contract VerifyJWT {
     // web2 server's RS256 public key, split into exponent and modulus
     uint256 public e;
     bytes public n;
+
+    // It would be very difficult to index people based on their base64url-encoded JWTs. Having a plaintext ID, such as an email address is needed. How can we do this? 
+    // Allow the user to select a string within t heir JWT to be indexed by
+    // how the id fields start and ed. For example, one web2 service may have IDs in the token as '"userID" : "vitalik.eth", "iat" : ...' 
+    // if the user is allowed to choose their id as anywhere in the contract, that would be bad. Here, we can enforce that the id must be wrapped by
+    bytes public ifsw;
+    bytes public ifew;
 
     bytes32[] public pendingVerification; //unneeded later, just for testing purposes
     bytes32[] public verifiedUsers;
@@ -30,10 +37,14 @@ contract VerifyJWT {
     //   }
     // }
     // }
-    constructor(uint256 exponent, bytes memory modulus){
+    constructor(uint256 exponent, bytes memory modulus){//, bytes memory idFieldStartsWith, bytes memory idFieldEndsWith){
       e = exponent;
       n = modulus;
-    }
+    //   ifsw = idFieldStartsWith;
+    //   ifew = idFieldEndsWith;
+    //   ifsl = idFieldStartsWith.length;
+    //   ifel = idFieldEndsWith.length;
+    } 
 
     // Why am i putting test functions here haha
     function testAddressByteConversion(address a) public pure returns (bool) {
@@ -90,6 +101,21 @@ contract VerifyJWT {
 
     function stringToBytes(string memory s) public pure returns (bytes memory) {
       return abi.encodePacked(s);
+    }
+
+    function sliceBytesMemory(bytes memory m, uint256 start, uint256 end) public view returns (bytes memory r) {
+      console.log("sliceBytesMemory parameters");
+      console.logBytes(m);
+      console.log(start);
+      console.log(end);
+      assembly {
+        let offset := add(start, 0x20) //first 0x20 bytes of bytes typpe is length (no. of bytes)
+        r := add(m, start)
+        mstore(r, sub(end, start))
+      }
+      console.log("sliceBytesMemory values calculated");
+      // console.log(offset);
+      console.logBytes(r);
     }
     // logging function to support bytes32
     function logBytes32(bytes32 b_) internal view {
@@ -178,7 +204,7 @@ contract VerifyJWT {
     return true;
   }
 
-  function verifyMe(bytes memory signature, string memory jwt) public {
+  function verifyMe(bytes memory signature, string memory jwt) public { 
     // check whether JWT is valid 
     require(verifyJWT(signature, jwt),"Verification of JWT failed");
     // check whether sender has already proved knowledge of the jwt
@@ -186,6 +212,27 @@ contract VerifyJWT {
     emit KeyAuthorization(true);
     addressForCreds[jwt] = msg.sender;
     credsForAddress[msg.sender] = jwt;
+    console.logBytes(Base64.decode(jwt));
+
+  }
+
+  function verifyMeWithReadableID(bytes memory signature, string memory jwt, uint idxStart, uint idxEnd, string memory proposedID) public { //also add  to verify that proposedId exists at jwt[idxStart:idxEnd]. If so, also verify that it starts with &id= and ends with &. So that we know it's a whole field and was actually the ID given
+    // check whether JWT is valid 
+    require(verifyJWT(signature, jwt),"Verification of JWT failed");
+    // check whether sender has already proved knowledge of the jwt
+    require(checkJWTProof(msg.sender, jwt), "Proof of previous knowlege of JWT unsuccessful");
+    emit KeyAuthorization(true);
+    addressForCreds[jwt] = msg.sender;
+    credsForAddress[msg.sender] = jwt;
+    bytes memory b64decoded = Base64.decode(jwt);
+    bytes memory proposedIDBytes = stringToBytes(proposedID);
+    // workaround to compare equality of bytes memory and bytes memory slice
+    // console.log(bytes32(b64decoded[idxStart:idxEnd])) == bytes32(proposedIDBytes);
+    console.logBytes(b64decoded);
+    console.logBytes(sliceBytesMemory(b64decoded, idxStart, idxEnd));
+    console.logBytes(proposedIDBytes);
+    
+
   }
 
   // kind of a hack; this view function is just for the frontend to call because it's easier to write code to XOR uint256s in Solidity than JS...idieally, this is done in browser

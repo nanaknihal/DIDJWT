@@ -104,18 +104,19 @@ contract VerifyJWT {
     }
 
     function sliceBytesMemory(bytes memory m, uint256 start, uint256 end) public view returns (bytes memory r) {
-      console.log("sliceBytesMemory parameters");
-      console.logBytes(m);
-      console.log(start);
-      console.log(end);
+      // console.log("sliceBytesMemory parameters");
+      // console.logBytes(m);
+      // console.log(start);
+      // console.log(end);
+      require(start < end, "index start must be less than inded end");
       assembly {
         let offset := add(start, 0x20) //first 0x20 bytes of bytes typpe is length (no. of bytes)
         r := add(m, start)
         mstore(r, sub(end, start))
       }
-      console.log("sliceBytesMemory values calculated");
+      // console.log("sliceBytesMemory values calculated");
       // console.log(offset);
-      console.logBytes(r);
+      // console.logBytes(r);
     }
     // logging function to support bytes32
     function logBytes32(bytes32 b_) internal view {

@@ -8,20 +8,33 @@ contract VerifyJWT {
       uint256 blockNumber;
       bytes32 hashedJWT;
     }
+
+    // creds are the identifier / index field in the JWT, e.g. ID or email (the rest of the JWT has lots of other information)
+    mapping(address => string) public JWTForAddress;
+    mapping(string => address) public addressForJWT;
+
     mapping(address => string) public credsForAddress;
     mapping(string => address) public addressForCreds;
+
+
+
     mapping(bytes32 => JWTProof) public jwtProofs;
 
     // web2 server's RS256 public key, split into exponent and modulus
     uint256 public e;
     bytes public n;
-
-    // It would be very difficult to index people based on their base64url-encoded JWTs. Having a plaintext ID, such as an email address is needed. How can we do this? 
+     // It would be very difficult to index people based on their base64url-encoded JWTs. Having a plaintext ID, such as an email address is needed. How can we do this? 
     // Allow the user to select a string within t heir JWT to be indexed by
     // how the id fields start and ed. For example, one web2 service may have IDs in the token as '"userID" : "vitalik.eth", "iat" : ...' 
     // if the user is allowed to choose their id as anywhere in the contract, that would be bad. Here, we can enforce that the id must be wrapped by
-    bytes public ifsw;
-    bytes public ifew;
+
+    // topBread and bottomBread refer to the start and end of the byte sandwhich which desired credential must be between.
+    // for example, a JWT can have many fields, but we just want the email, which is in a part that looks like: '"email" : email_here, "next field' : . So then, you can set topBread to ', "next field' : ' and bottomBread to '"email" : '
+    // then, when you validate the JWT, the user supplies '"email" : email_here, "next field', and this contract can approve it because the sandwhich starts and ends the right way
+    bytes public topBread;
+    bytes public bottomBread;
+   
+
 
     bytes32[] public pendingVerification; //unneeded later, just for testing purposes
     bytes32[] public verifiedUsers;
@@ -29,21 +42,13 @@ contract VerifyJWT {
     event modExpEventForTesting(bytes result_);
     event JWTVerification(bool result_);
     event KeyAuthorization(bool result_);
-    // function verify(uint256 base_length, uint256 exponent_length, uint256 modulus_length, bytes memory base, bytes memory exponent, bytes memory modulus){
-    //   assembly {
-    //   // call ecmul precompile
-    //   if iszero(call(not(0), 0x05, base_length, exponent_length, modulus_length, base, exponent, modulus)) {
-    //     revert(0, 0)
-    //   }
-    // }
-    // }
-    constructor(uint256 exponent, bytes memory modulus){//, bytes memory idFieldStartsWith, bytes memory idFieldEndsWith){
-      e = exponent;
-      n = modulus;
-    //   ifsw = idFieldStartsWith;
-    //   ifew = idFieldEndsWith;
-    //   ifsl = idFieldStartsWith.length;
-    //   ifel = idFieldEndsWith.length;
+    
+    // exponent and modulus comrpise the RSA public key of the web2 authenticator which signed the JWT. 
+    constructor(uint256 exponent_, bytes memory modulus_, bytes memory topBread_, bytes memory bottomBread_){
+      e = exponent_;
+      n = modulus_;
+      topBread = topBread; 
+      bottomBread = bottomBread_;
     } 
 
     // Why am i putting test functions here haha
@@ -55,6 +60,12 @@ contract VerifyJWT {
     function bytesToAddress(bytes memory b_) private pure returns (address addr) {
       assembly {
         addr := mload(add(b_,20))
+      } 
+    }
+
+    function bytesToString(bytes memory b_) private pure returns (string memory str) {
+      assembly {
+        str := mload(add(b_,20))
       } 
     }
 
@@ -92,7 +103,7 @@ contract VerifyJWT {
       return abi.encodePacked(a);
     }
     
-    function bytes32ToBytes(bytes32 b_) private pure returns (bytes memory){
+    function bytes32ToBytes(bytes32 b_) public pure returns (bytes memory){
       return abi.encodePacked(b_);
     }
     // function addressToBytes32(address a) public pure returns (bytes32) {
@@ -101,6 +112,10 @@ contract VerifyJWT {
 
     function stringToBytes(string memory s) public pure returns (bytes memory) {
       return abi.encodePacked(s);
+    }
+
+    function bytesAreEqual(bytes memory  a_, bytes memory b_) public pure returns (bool) {
+      return (a_.length == b_.length) && (keccak256(a_) == keccak256(b_));
     }
 
     function sliceBytesMemory(bytes memory m, uint256 start, uint256 end) public view returns (bytes memory r) {
@@ -205,34 +220,50 @@ contract VerifyJWT {
     return true;
   }
 
-  function verifyMe(bytes memory signature, string memory jwt) public { 
+  function _verify(address addr, bytes memory signature, string memory jwt) private returns (bool) { 
     // check whether JWT is valid 
     require(verifyJWT(signature, jwt),"Verification of JWT failed");
     // check whether sender has already proved knowledge of the jwt
-    require(checkJWTProof(msg.sender, jwt), "Proof of previous knowlege of JWT unsuccessful");
+    require(checkJWTProof(addr, jwt), "Proof of previous knowlege of JWT unsuccessful");
     emit KeyAuthorization(true);
-    addressForCreds[jwt] = msg.sender;
-    credsForAddress[msg.sender] = jwt;
-    console.logBytes(Base64.decode(jwt));
-
+    return true;
   }
 
-  function verifyMeWithReadableID(bytes memory signature, string memory jwt, uint idxStart, uint idxEnd, string memory proposedID) public { //also add  to verify that proposedId exists at jwt[idxStart:idxEnd]. If so, also verify that it starts with &id= and ends with &. So that we know it's a whole field and was actually the ID given
-    // check whether JWT is valid 
-    require(verifyJWT(signature, jwt),"Verification of JWT failed");
-    // check whether sender has already proved knowledge of the jwt
-    require(checkJWTProof(msg.sender, jwt), "Proof of previous knowlege of JWT unsuccessful");
-    emit KeyAuthorization(true);
-    addressForCreds[jwt] = msg.sender;
-    credsForAddress[msg.sender] = jwt;
+  // This is the endpoint a frontend should call. It takes a signature, JWT, IDSandwich (see comments), and start/end index of where the IDSandwhich can be found
+  function verifyMe(bytes memory signature, string memory jwt, uint idxStart, uint idxEnd, string memory proposedIDSandwich) public { //also add  to verify that proposedId exists at jwt[idxStart:idxEnd]. If so, also verify that it starts with &id= and ends with &. So that we know it's a whole field and was actually the ID given
+    require(_verify(msg.sender, signature, jwt), "JWT Verification failed");
+
     bytes memory b64decoded = Base64.decode(jwt);
-    bytes memory proposedIDBytes = stringToBytes(proposedID);
-    // workaround to compare equality of bytes memory and bytes memory slice
-    // console.log(bytes32(b64decoded[idxStart:idxEnd])) == bytes32(proposedIDBytes);
+    bytes memory proposedIDSandwichBytes = stringToBytes(proposedIDSandwich);
     console.logBytes(b64decoded);
     console.logBytes(sliceBytesMemory(b64decoded, idxStart, idxEnd));
-    console.logBytes(proposedIDBytes);
-    
+    console.logBytes(proposedIDSandwichBytes);
+
+    // make sure proposed id starts and ends with the required opening and closing strings (as byets):
+    require(bytesAreEqual(
+                          sliceBytesMemory(proposedIDSandwichBytes, 0, bottomBread.length),
+                          bottomBread)
+    );
+    require(bytesAreEqual(
+                          sliceBytesMemory(proposedIDSandwichBytes, idxEnd, proposedIDSandwichBytes.length),
+                          topBread)
+    );
+    // make sure proposed id is found in the original jwt
+    require(bytesAreEqual(
+                          sliceBytesMemory(b64decoded, idxStart, idxEnd),
+                          proposedIDSandwichBytes
+            ),
+           "proposed ID not found in JWT"
+    );
+    bytes memory credsBytes = sliceBytesMemory(proposedIDSandwichBytes, bottomBread.length, proposedIDSandwichBytes.length - topBread.length);
+    string memory creds = bytesToString((credsBytes));
+    console.log(creds);
+
+    addressForCreds[creds] = msg.sender;
+    credsForAddress[msg.sender] = creds;
+    addressForJWT[jwt] = msg.sender;
+    JWTForAddress[msg.sender] = jwt;
+    // credsForAddress[msg.sender] = jwt;
 
   }
 
@@ -247,5 +278,6 @@ contract VerifyJWT {
   function testSHA256OnJWT(string memory jwt) public pure returns (bytes32){
     return sha256(stringToBytes(jwt));
   }
+  
   
 }

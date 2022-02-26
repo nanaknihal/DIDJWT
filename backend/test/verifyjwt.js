@@ -36,7 +36,7 @@ const { ethers } = require('hardhat');
 describe('slicing of byte array', function (){
   before(async function(){
     [this.owner] = await ethers.getSigners();
-    this.vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(11,59)
+    this.vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(11,59, '0x222c22737562223a22', '0x222c22617574685f74696d65223a')
   });
 
   it('slicing raw bytes gives correct result', async function () {
@@ -61,7 +61,7 @@ describe('slicing of byte array', function (){
 describe('type conversion and cryptography', function (){
   before(async function(){
     [this.owner] = await ethers.getSigners();
-    this.vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(11,59)
+    this.vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(11,59, '0x222c22737562223a22', '0x222c22617574685f74696d65223a')
     this.message = 'Hey'
   });
 
@@ -75,7 +75,7 @@ describe('type conversion and cryptography', function (){
 describe('modExp works', function () {
   it('Test modExp on some simple numbers', async function () {
     const [owner] = await ethers.getSigners();
-    let vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(58,230)
+    let vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(58,230, '0x222c22737562223a22', '0x222c22617574685f74696d65223a')
     await expect(vjwt.modExp(0x004b,1,8001)).to.emit(vjwt, 'modExpEventForTesting').withArgs('0x004b');
     await expect(vjwt.modExp(5,5,5)).to.emit(vjwt, 'modExpEventForTesting').withArgs('0x00');
     await expect(vjwt.modExp(0,1,6)).to.emit(vjwt, 'modExpEventForTesting').withArgs('0x00');
@@ -95,7 +95,7 @@ describe('Verify test RSA signatures', function () {
       ethers.BigNumber.from(Buffer.from(pubkey.keys[0]['e'], 'base64url')), 
       Buffer.from(pubkey.keys[0]['n'], 'base64url')
     ]
-    let vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(e,n);
+    let vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(e,n, '0x222c22737562223a22', '0x222c22617574685f74696d65223a');
 
     await expect(vjwt.verifyJWT(ethers.BigNumber.from(signature), headerRaw + '.' + payloadRaw)).to.emit(vjwt, 'JWTVerification').withArgs(true);
     // make sure it doesn't work with wrong JWT or signature:
@@ -108,7 +108,7 @@ describe('Verify test RSA signatures', function () {
 describe('proof of prior knowledge', function () {
   beforeEach(async function(){
     [this.owner, this.addr1] = await ethers.getSigners();
-    this.vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(11,230)
+    this.vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(11,230, '0x222c22737562223a22', '0x222c22617574685f74696d65223a')
     this.message1 = 'Hey'
     this.message2 = 'Hey2'
     // Must use two unique hashing algorithms
@@ -165,7 +165,7 @@ describe('Integration test', function () {
     ]
 
 
-    let vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(e,n);
+    let vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(e,n, '0x222c22737562223a22', '0x222c22617574685f74696d65223a');
     let message = headerRaw + '.' + payloadRaw
     let publicHashedMessage = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(message))
     let secretHashedMessage = ethers.utils.sha256(ethers.utils.toUtf8Bytes(message))

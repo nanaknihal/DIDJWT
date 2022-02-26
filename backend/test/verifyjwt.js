@@ -1,5 +1,6 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
+const search64 = require('/Users/nnsk/Desktop/ethdenver/whoisthis.wtf-frontend/src/searchForPlaintextInBase64.js');
 
 // describe('Integration test 2', function () {
 //   it('Go through full process and make sure it success with a correct JWT', async function () {
@@ -148,6 +149,21 @@ describe('proof of prior knowledge', function () {
   });
 });
 
+// Make sure it does bottomBread + id + topBread and does not allow any other text in between. If Google changes their JWT format so that the sandwich now contains other fields between bottomBread and topBread, this should fail until the contract is updated. 
+async function sandwichIDWithBreadFromContract(id, contract){
+  let sandwich = (await contract.bottomBread()) + Buffer.from(id).toString('hex') + (await contract.topBread());
+  sandwich = sandwich.replaceAll('0x', '');
+  return sandwich
+}
+
+describe('Frontend sandwiching', function(){
+  it('Test that correct sandwich is given for a specific ID', async function(){
+    let vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(50,100, '0x222c22737562223a22', '0x222c22617574685f74696d65223a');
+    expect(await sandwichIDWithBreadFromContract('0000-0002-2308-9517', vjwt)).to.equal('222c22737562223a22303030302d303030322d323330382d39353137222c22617574685f74696d65223a');
+  });
+});
+
+
 describe('Integration test', function () {
   it('Go through full process and make sure it success with a correct JWT', async function () {
     const [owner, addr1] = await ethers.getSigners()
@@ -157,6 +173,7 @@ describe('Integration test', function () {
     orig.split('&').map(x=>{let [key, value] = x.split('='); parsedToJSON[key] = value});
     let [headerRaw, payloadRaw, signatureRaw] = parsedToJSON['id_token'].split('.');
     // let [header, payload] = [headerRaw, payloadRaw].map(x => JSON.parse(atob(x)));
+    // let payload = atob(payloadRaw);
     let [signature] = [Buffer.from(signatureRaw, 'base64url')]
     const pubkey = JSON.parse('{"keys":[{"kty":"RSA","e":"AQAB","use":"sig","kid":"production-orcid-org-7hdmdswarosg3gjujo8agwtazgkp1ojs","n":"jxTIntA7YvdfnYkLSN4wk__E2zf_wbb0SV_HLHFvh6a9ENVRD1_rHK0EijlBzikb-1rgDQihJETcgBLsMoZVQqGj8fDUUuxnVHsuGav_bf41PA7E_58HXKPrB2C0cON41f7K3o9TStKpVJOSXBrRWURmNQ64qnSSryn1nCxMzXpaw7VUo409ohybbvN6ngxVy4QR2NCC7Fr0QVdtapxD7zdlwx6lEwGemuqs_oG5oDtrRuRgeOHmRps2R6gG5oc-JqVMrVRv6F9h4ja3UgxCDBQjOVT1BFPWmMHnHCsVYLqbbXkZUfvP2sO1dJiYd_zrQhi-FtNth9qrLLv3gkgtwQ"}]}')
     const [e, n] = [
@@ -164,18 +181,29 @@ describe('Integration test', function () {
       Buffer.from(pubkey.keys[0]['n'], 'base64url')
     ]
 
-
     let vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(e,n, '0x222c22737562223a22', '0x222c22617574685f74696d65223a');
     let message = headerRaw + '.' + payloadRaw
+    let payloadIdx = Buffer.from(headerRaw).length + Buffer.from('.').length
+    console.log('payloadIdx is', payloadIdx);
+    let sandwich = await sandwichIDWithBreadFromContract('0000-0002-2308-9517', vjwt);
+    console.log('js.sandwich',  sandwich)
+    // find indices of sandwich in raw payload:
+    let [startIdx, endIdx] = search64.searchForPlainTextInBase64(Buffer.from(sandwich, 'hex').toString(), payloadRaw)
+    // console.log(await getIndicesOfIDSandwich('0000-0002-2308-9517', payloadRaw, vjwt));
     let publicHashedMessage = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(message))
     let secretHashedMessage = ethers.utils.sha256(ethers.utils.toUtf8Bytes(message))
     let proof = await vjwt.XOR(secretHashedMessage, owner.address)
 
     await vjwt.commitJWTProof(proof, publicHashedMessage)
-    await ethers.provider.send('evm_mine')  
-    await expect(vjwt.verifyMe(ethers.BigNumber.from(signature), message)).to.emit(vjwt, 'JWTVerification').withArgs(true);
-    await expect(vjwt.verifyMe(ethers.BigNumber.from(signature), message)).to.emit(vjwt, 'KeyAuthorization').withArgs(true); 
-    await expect(vjwt.verifyMe(ethers.BigNumber.from(signature), message.replace('a', 'b'))).to.be.revertedWith('Verification of JWT failed');
-    
+    await ethers.provider.send('evm_mine')
+    console.log(startIdx, endIdx, 'start/end')
+    await expect(vjwt.verifyMe(ethers.BigNumber.from(signature), message, payloadIdx, startIdx, endIdx, '0x'+sandwich)).to.emit(vjwt, 'JWTVerification').withArgs(true);
+    // await expect(vjwt.verifyMe(ethers.BigNumber.from(signature), message)).to.emit(vjwt, 'KeyAuthorization').withArgs(true); 
+    // await expect(vjwt.verifyMe(ethers.BigNumber.from(signature), message.replace('a', 'b'))).to.be.revertedWith('Verification of JWT failed');
   });
 });
+
+
+// 0x222c22737562223a22303030302d303030322d323330382d39353137222c22617574685f74696d65223a
+// 0x222c22617574685f74696d65223a303030302d303030322d323330382d393531370x
+// 0x222c22617574685f74696d65223a

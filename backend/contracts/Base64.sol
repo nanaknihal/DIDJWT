@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// from https://github.com/Brechtpd/base64/blob/main/base64.sol
+// modified from https://github.com/Brechtpd/base64/blob/main/base64.sol
 
 pragma solidity >=0.6.0;
 
@@ -67,8 +67,10 @@ library Base64 {
     }
 
     function decode(string memory _data) internal pure returns (bytes memory) {
-        bytes memory data = bytes(_data);
+        decodeFromBytes(bytes(_data));
+    }
 
+    function decodeFromBytes(bytes memory data) internal pure returns (bytes memory) {
         if (data.length == 0) return new bytes(0);
         require(data.length % 4 == 0, "invalid base64 decoder input");
 

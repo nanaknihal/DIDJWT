@@ -6,7 +6,7 @@
   "function JWTForAddress(address) view returns (string)",
   "function XOR(uint256,uint256) pure returns (uint256)",
   "function _verifyJWT(uint256,bytes,bytes,bytes) returns (bool)",
-  "function addressForCreds(string) view returns (address)",
+  "function addressForCreds(bytes) view returns (address)",
   "function addressForJWT(string) view returns (address)",
   "function addressToBytes(address) pure returns (bytes)",
   "function bottomBread() view returns (bytes)",
@@ -17,7 +17,7 @@
   "function bytesToLast32BytesAsBytes32Type(bytes) pure returns (bytes32)",
   "function checkJWTProof(address,string) view returns (bool)",
   "function commitJWTProof(bytes32,bytes32)",
-  "function credsForAddress(address) view returns (string)",
+  "function credsForAddress(address) view returns (bytes)",
   "function e() view returns (uint256)",
   "function jwtProofs(bytes32) view returns (uint256, bytes32)",
   "function modExp(bytes,uint256,bytes) returns (bytes)",
@@ -30,5 +30,5 @@
   "function topBread() view returns (bytes)",
   "function verifiedUsers(uint256) view returns (bytes32)",
   "function verifyJWT(bytes,string) returns (bool)",
-  "function verifyMe(bytes,string,uint256,uint256,string)"
+  "function verifyMe(bytes,string,uint256,uint256,uint256,bytes)"
 ]

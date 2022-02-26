@@ -13,8 +13,8 @@ contract VerifyJWT {
     mapping(address => string) public JWTForAddress;
     mapping(string => address) public addressForJWT;
 
-    mapping(address => string) public credsForAddress;
-    mapping(string => address) public addressForCreds;
+    mapping(address => bytes) public credsForAddress;
+    mapping(bytes => address) public addressForCreds;
 
 
 
@@ -44,10 +44,10 @@ contract VerifyJWT {
     event KeyAuthorization(bool result_);
     
     // exponent and modulus comrpise the RSA public key of the web2 authenticator which signed the JWT. 
-    constructor(uint256 exponent_, bytes memory modulus_, bytes memory topBread_, bytes memory bottomBread_){
+    constructor(uint256 exponent_, bytes memory modulus_, bytes memory bottomBread_, bytes memory topBread_){
       e = exponent_;
       n = modulus_;
-      topBread = topBread; 
+      topBread = topBread_; 
       bottomBread = bottomBread_;
     } 
 
@@ -60,12 +60,6 @@ contract VerifyJWT {
     function bytesToAddress(bytes memory b_) private pure returns (address addr) {
       assembly {
         addr := mload(add(b_,20))
-      } 
-    }
-
-    function bytesToString(bytes memory b_) private pure returns (string memory str) {
-      assembly {
-        str := mload(add(b_,20))
       } 
     }
 
@@ -229,41 +223,59 @@ contract VerifyJWT {
     return true;
   }
 
-  // This is the endpoint a frontend should call. It takes a signature, JWT, IDSandwich (see comments), and start/end index of where the IDSandwhich can be found
-  function verifyMe(bytes memory signature, string memory jwt, uint idxStart, uint idxEnd, string memory proposedIDSandwich) public { //also add  to verify that proposedId exists at jwt[idxStart:idxEnd]. If so, also verify that it starts with &id= and ends with &. So that we know it's a whole field and was actually the ID given
+  // This is the endpoint a frontend should call. It takes a signature, JWT, IDSandwich (see comments), and start/end index of where the IDSandwhich can be found. It also takes a payload index start, as it must know the payload to decode the Base64 JWT
+  function verifyMe(bytes memory signature, string memory jwt, uint payloadIdxStart, uint idxStart, uint idxEnd, bytes memory proposedIDSandwich) public { //also add  to verify that proposedId exists at jwt[idxStart:idxEnd]. If so, also verify that it starts with &id= and ends with &. So that we know it's a whole field and was actually the ID given
     require(_verify(msg.sender, signature, jwt), "JWT Verification failed");
 
-    bytes memory b64decoded = Base64.decode(jwt);
-    bytes memory proposedIDSandwichBytes = stringToBytes(proposedIDSandwich);
+    // there seems to be no advantage in lying about where the payload starts, but it may be more secure to implemenent a check here that the payload starts after a period
+    bytes memory jwtBytes = stringToBytes(jwt);
+    bytes memory payload = sliceBytesMemory(jwtBytes, payloadIdxStart, jwtBytes.length);
+    console.log('payload is');
+    console.logBytes(payload);
+    bytes memory b64decoded = Base64.decodeFromBytes(payload);
+    // bytes memory proposedIDSandwichBytes = stringToBytes(proposedIDSandwich);
     console.logBytes(b64decoded);
     console.logBytes(sliceBytesMemory(b64decoded, idxStart, idxEnd));
-    console.logBytes(proposedIDSandwichBytes);
+    console.logBytes(proposedIDSandwich);
+
+
 
     // make sure proposed id starts and ends with the required opening and closing strings (as byets):
-    require(bytesAreEqual(
-                          sliceBytesMemory(proposedIDSandwichBytes, 0, bottomBread.length),
-                          bottomBread)
+    console.log("CHECKPOINT");
+    console.log(proposedIDSandwich.length, topBread.length, proposedIDSandwich.length-topBread.length);
+    console.logBytes(
+      sliceBytesMemory(proposedIDSandwich, proposedIDSandwich.length-topBread.length, proposedIDSandwich.length)
     );
-    require(bytesAreEqual(
-                          sliceBytesMemory(proposedIDSandwichBytes, idxEnd, proposedIDSandwichBytes.length),
-                          topBread)
-    );
-    // make sure proposed id is found in the original jwt
-    require(bytesAreEqual(
-                          sliceBytesMemory(b64decoded, idxStart, idxEnd),
-                          proposedIDSandwichBytes
-            ),
-           "proposed ID not found in JWT"
-    );
-    bytes memory credsBytes = sliceBytesMemory(proposedIDSandwichBytes, bottomBread.length, proposedIDSandwichBytes.length - topBread.length);
-    string memory creds = bytesToString((credsBytes));
-    console.log(creds);
 
-    addressForCreds[creds] = msg.sender;
-    credsForAddress[msg.sender] = creds;
-    addressForJWT[jwt] = msg.sender;
-    JWTForAddress[msg.sender] = jwt;
-    // credsForAddress[msg.sender] = jwt;
+    require(bytesAreEqual(
+                          sliceBytesMemory(proposedIDSandwich, 0, bottomBread.length),
+                          bottomBread
+            ),
+            "Failed to find correct bottom bread in sandwich"
+    );
+
+    require(bytesAreEqual(
+                          sliceBytesMemory(proposedIDSandwich, proposedIDSandwich.length-topBread.length, proposedIDSandwich.length),
+                          topBread
+            ),
+            "Failed to find correct top bread in sandwich"
+    );
+
+    // // make sure proposed id is found in the original jwt
+    // require(bytesAreEqual(
+    //                       sliceBytesMemory(b64decoded, idxStart, idxEnd),
+    //                       proposedIDSandwich
+    //         ),
+    //        "proposedIDSandwich not found in JWT"
+    // );
+    // bytes memory creds = sliceBytesMemory(proposedIDSandwich, bottomBread.length, proposedIDSandwich.length - topBread.length);
+    // console.logBytes(creds);
+
+    // addressForCreds[creds] = msg.sender;
+    // credsForAddress[msg.sender] = creds;
+    // addressForJWT[jwt] = msg.sender;
+    // JWTForAddress[msg.sender] = jwt;
+    // // credsForAddress[msg.sender] = jwt;
 
   }
 

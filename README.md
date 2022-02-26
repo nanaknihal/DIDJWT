@@ -7,6 +7,7 @@ Link a public key to an online account with OpenID
 *Solution*: 
 Verify a JWT on-chain without compromising user security
 
+Youtube video about the protocol https://youtu.be/MmR9bhULpxE
 ### Insecure, simple way:
 
 1. Request an `id_token` (NOT an `acces_token` which would grant priviliges and should not be shared)
@@ -59,3 +60,14 @@ Returns:
 {"access_token":"629abc31-17dd-4202-8e1d-6259fbeea759","token_type":"bearer","refresh_token":"5582cddd-79a6-4406-a1e6-f971bba0ee7d","expires_in":631138518,"scope":"/authenticate","name":"Nanak Nihal Khalsa","orcid":"0000-0002-2308-9517"}
 
 BEFORE YOU SUBMIT TO THE BLOCKCHAIN, MAKE SURE TO INVALIDATE THE ACCESS AND REFRESH TOKEN. This can be done by refresh token rotation, if supported (e.g. OAuth and Okta support it). Google sign in requires going to settings and disabling the app's access (perhaps it be easier soon or already has and I didn't research it enough) 
+
+
+
+## testnet addresses of JWT verifiers
+### Polygon
+ORCID: 0x8E68b0751b65D38fe02835c16b191D978b57994a
+FB0: 0x0B5df11E8AB2e00F01093ae52616cCF15B7d12Ff
+FB1: 0xcb9aD9B8f1d642e645C8Dfc7Bcd14B473Cf168BD
+### Ropsten
+ORCID: 0xdF10310d2C72F5358b19bF6A7C817Ec4570b270f
+

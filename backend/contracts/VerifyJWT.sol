@@ -284,22 +284,23 @@ contract VerifyJWT {
             "Failed to find correct top bread in sandwich"
     );
 
-    // // make sure proposed id is found in the original jwt
-    // require(bytesAreEqual(
-    //                       sliceBytesMemory(b64decoded, idxStart, idxEnd),
-    //                       proposedIDSandwich
-    //         ),
-    //        "proposedIDSandwich not found in JWT"
-    // );
-    // bytes memory creds = sliceBytesMemory(proposedIDSandwich, bottomBread.length, proposedIDSandwich.length - topBread.length);
-    // console.logBytes(creds);
+    // make sure proposed id is found in the original jwt
+    require(bytesAreEqual(
+                          sliceBytesMemory(b64decoded, idxStart, idxEnd),
+                          proposedIDSandwich
+            ),
+           "proposedIDSandwich not found in JWT"
+    );
+    bytes memory creds = sliceBytesMemory(proposedIDSandwich, bottomBread.length, proposedIDSandwich.length - topBread.length);
+    console.logBytes(creds);
 
-    // addressForCreds[creds] = msg.sender;
-    // credsForAddress[msg.sender] = creds;
-    // addressForJWT[jwt] = msg.sender;
-    // JWTForAddress[msg.sender] = jwt;
-    // // credsForAddress[msg.sender] = jwt;
-
+    // make sure there is no previous entry for this JWT - it should only be usable once!
+    require(addressForJWT[jwt] == address(0), "JWT can only be used on-chain once");
+    addressForJWT[jwt] = msg.sender;
+    addressForCreds[creds] = msg.sender;
+    JWTForAddress[msg.sender] = jwt;
+    credsForAddress[msg.sender] = creds;
+    console.log("REMEMBER TO TEST THAT JWT CAN ONLY BE USED ONCE! THIS IS A NEW, UNTESTED FEATURE, JUST IMPLEMENTED");
   }
 
   // kind of a hack; this view function is just for the frontend to call because it's easier to write code to XOR uint256s in Solidity than JS...idieally, this is done in browser

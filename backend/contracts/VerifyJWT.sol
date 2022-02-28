@@ -292,6 +292,7 @@ contract VerifyJWT {
            "proposedIDSandwich not found in JWT"
     );
     bytes memory creds = sliceBytesMemory(proposedIDSandwich, bottomBread.length, proposedIDSandwich.length - topBread.length);
+    console.log('CREDS');
     console.logBytes(creds);
 
     // make sure there is no previous entry for this JWT - it should only be usable once!

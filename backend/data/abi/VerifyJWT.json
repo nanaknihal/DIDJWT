@@ -18,6 +18,7 @@
   "function checkJWTProof(address,string) view returns (bool)",
   "function commitJWTProof(bytes32,bytes32)",
   "function credsForAddress(address) view returns (bytes)",
+  "function destructivelySliceBytesMemory(bytes,uint256,uint256) pure returns (bytes)",
   "function e() view returns (uint256)",
   "function jwtProofs(bytes32) view returns (uint256, bytes32)",
   "function modExp(bytes,uint256,bytes) returns (bytes)",

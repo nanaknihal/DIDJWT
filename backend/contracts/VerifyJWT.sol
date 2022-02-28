@@ -112,24 +112,45 @@ contract VerifyJWT {
       return (a_.length == b_.length) && (keccak256(a_) == keccak256(b_));
     }
 
-    function sliceBytesMemory(bytes memory m, uint256 start, uint256 end) public view returns (bytes memory r) {
-      // console.log("sliceBytesMemory parameters");
-      // console.logBytes(m);
-      // console.log(start);
-      // console.log(end);
+    // // Can't figure out why this isn't working right now, so using less efficient version instead:
+    // function sliceBytesMemory(bytes memory input_, uint256 start_, uint256 end_) public view returns (bytes memory r) {
+    //   require(start_ < end_, "index start must be less than inded end");
+    //   uint256 sliceLength = end_ - start_;
+    //   bytes memory r = new bytes(sliceLength);
+    //   console.log('HERE');
+    //   console.logBytes(r);
+    //   assembly {
+    //     let offset := add(start_, 0x20)
+    //     if iszero(staticcall(not(0), add(input_, offset), sliceLength, add(r, 0x20), sliceLength)) {
+    //         revert(0, 0)
+    //     }
+    //   }
+    //  
+    //
+    // }
+
+    // This could be more efficient by not copying the whole thing -- just the parts that matter
+    function sliceBytesMemory(bytes memory input_, uint256 start_, uint256 end_) public view returns (bytes memory r) {
+      uint256 len_ = input_.length;
+      bytes memory r = new bytes(len_);
+      
+      assembly {
+          // Use identity to copy data
+          if iszero(staticcall(not(0), 0x04, add(input_, 0x20), len_, add(r, 0x20), len_)) {
+              revert(0, 0)
+          }
+      }
+      return destructivelySliceBytesMemory(r, start_, end_);
+    }
+    
+    function destructivelySliceBytesMemory(bytes memory m, uint256 start, uint256 end) public pure returns (bytes memory r) {
+
       require(start < end, "index start must be less than inded end");
       assembly {
-        let offset := add(start, 0x20) //first 0x20 bytes of bytes typpe is length (no. of bytes)
+        let offset := add(start, 0x20) //first 0x20 bytes of bytes type is length (no. of bytes)
         r := add(m, start)
         mstore(r, sub(end, start))
       }
-      // console.log("sliceBytesMemory values calculated");
-      // console.log(offset);
-      // console.logBytes(r);
-    }
-    // logging function to support bytes32
-    function logBytes32(bytes32 b_) internal view {
-      console.logBytes(bytes32ToBytes(b_));
     }
 
     // BIG thanks to dankrad for this function: https://github.com/dankrad/rsa-bounty/blob/master/contract/rsa_bounty.sol
@@ -243,9 +264,11 @@ contract VerifyJWT {
     // make sure proposed id starts and ends with the required opening and closing strings (as byets):
     console.log("CHECKPOINT");
     console.log(proposedIDSandwich.length, topBread.length, proposedIDSandwich.length-topBread.length);
+        
     console.logBytes(
       sliceBytesMemory(proposedIDSandwich, proposedIDSandwich.length-topBread.length, proposedIDSandwich.length)
     );
+    
 
     require(bytesAreEqual(
                           sliceBytesMemory(proposedIDSandwich, 0, bottomBread.length),

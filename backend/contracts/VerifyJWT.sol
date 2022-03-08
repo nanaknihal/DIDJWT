@@ -304,9 +304,7 @@ contract VerifyJWT {
     console.log("REMEMBER TO TEST THAT JWT CAN ONLY BE USED ONCE! THIS IS A NEW, UNTESTED FEATURE, JUST IMPLEMENTED");
   }
 
-  // kind of a hack; this view function is just for the frontend to call because it's easier to write code to XOR uint256s in Solidity than JS...idieally, this is done in browser
-  // It also allows your node provider to frontrun you, as you are trusting them with the JWT hash, but i don't think that will happen ;) still not decentralized enough, and should be put browser-side
-  // I don't think anyone else can frontrun you because I don't think view/pure functions are submitted to the mempool
+  // This function is used for testing purposes and can be deleted later. It's better not to call it from the frontend for security reasons, as the data being XORed is often private. Calling it from the frontend leaks this data to your node provider
   function XOR(uint256 x, uint256 y) public pure returns (uint256) {
     return x ^ y;
   }

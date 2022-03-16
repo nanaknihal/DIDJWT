@@ -24,6 +24,7 @@
   "function getRegisteredCreds() view returns (bytes[])",
   "function modExp(bytes,uint256,bytes) returns (bytes)",
   "function n() view returns (bytes)",
+  "function privateJWTForAddress(address) view returns (bytes32)",
   "function proofAtBlock(bytes32) view returns (uint256)",
   "function registeredAddresses(uint256) view returns (address)",
   "function registeredCreds(uint256) view returns (bytes)",
@@ -35,5 +36,6 @@
   "function verifiedUsers(uint256) view returns (bytes32)",
   "function verifyJWT(bytes,bytes32) returns (bool)",
   "function verifyJWT(bytes,string) returns (bool)",
-  "function verifyMe(bytes,string,uint256,uint256,uint256,bytes)"
+  "function verifyMe(bytes,string,uint256,uint256,uint256,bytes)",
+  "function verifyMePrivate(bytes,bytes32)"
 ]

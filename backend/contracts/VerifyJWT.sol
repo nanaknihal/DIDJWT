@@ -16,6 +16,8 @@ contract VerifyJWT {
     mapping(address => bytes) public credsForAddress;
     mapping(bytes => address) public addressForCreds;
 
+    mapping (address => bytes32) public privateJWTForAddress; //also store hashes of JWT header.payloads for on-chain verified sovereign identity
+
     address[] public registeredAddresses;
     bytes[] public registeredCreds;
     
@@ -261,16 +263,6 @@ contract VerifyJWT {
     return true;
   }
 
-  function _verify(address addr, bytes memory signature, string memory jwt) private returns (bool) { 
-    // check whether JWT is valid 
-    require(verifyJWT(signature, jwt),"Verification of JWT failed");
-    // check whether sender has already proved knowledge of the jwt
-    require(checkJWTProof(addr, jwt), "Proof of previous knowlege of JWT unsuccessful");
-    emit KeyAuthorization(true);
-    return true;
-  }
-
-  // same as _verify but for private (hashed JWTs)
   function _verify(address addr, bytes memory signature, bytes32 jwtHash) private returns (bool) { 
     // check whether JWT is valid 
     require(verifyJWT(signature, jwtHash),"Verification of JWT failed");
@@ -332,6 +324,18 @@ contract VerifyJWT {
     addressForCreds[creds] = msg.sender;
     JWTForAddress[msg.sender] = jwt;
     credsForAddress[msg.sender] = creds;
+
+  }
+
+  // User can just submit hash of 
+  function verifyMePrivate(bytes memory signature, bytes32 headerAndPayloadHash) public { //also add  to verify that proposedId exists at jwt[idxStart:idxEnd]. If so, also verify that it starts with &id= and ends with &. So that we know it's a whole field and was actually the ID given
+    // bytes memory jwtBytes = stringToBytes(jwt);
+    // bytes32 jwtHash = sha256(jwtBytes);
+
+    require(_verify(msg.sender, signature, headerAndPayloadHash), "JWT Verification failed");
+
+    // update hashmaps of addresses, credentials, and JWTs themselves
+    privateJWTForAddress[msg.sender] = headerAndPayloadHash;
 
   }
 

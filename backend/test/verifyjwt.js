@@ -2,6 +2,11 @@ const { expect } = require('chai');
 const { ethers } = require('hardhat');
 const search64 = require('/Users/nnsk/Desktop/ethdenver/whoisthis.wtf-frontend/src/searchForPlaintextInBase64.js');
 
+// input: x (string); output: keccak256 of string
+const sha256FromString = x => ethers.utils.sha256(ethers.utils.toUtf8Bytes(x))
+// input: x (string); output: sha256 of string
+const keccak256FromString = x => ethers.utils.keccak256(ethers.utils.toUtf8Bytes(x))
+
 // describe('Integration test 2', function () {
 //   it('Go through full process and make sure it success with a correct JWT', async function () {
 //     const [owner, addr1] = await ethers.getSigners()
@@ -21,8 +26,8 @@ const search64 = require('/Users/nnsk/Desktop/ethdenver/whoisthis.wtf-frontend/s
 
 //     let vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(e,n);
 //     let message = headerRaw + '.' + payloadRaw
-//     let publicHashedMessage = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(message))
-//     let secretHashedMessage = ethers.utils.sha256(ethers.utils.toUtf8Bytes(message))
+//     let publicHashedMessage = keccak256FromString(message)
+//     let secretHashedMessage = sha256FromString(message)
 //     let proof = await vjwt.XOR(secretHashedMessage, owner.address)
 
 //     await vjwt.commitJWTProof(proof, publicHashedMessage)
@@ -67,8 +72,8 @@ describe('type conversion and cryptography', function (){
   });
 
   it('sha256 hashing gives the same result on chain and frontend', async function () {
-    const publicHashedMessage = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(this.message))
-    const secretHashedMessage = ethers.utils.sha256(ethers.utils.toUtf8Bytes(this.message))  
+    const publicHashedMessage = keccak256FromString(this.message)
+    const secretHashedMessage = sha256FromString(this.message)  
     expect(await this.vjwt.testSHA256OnJWT(this.message)).to.equal(secretHashedMessage)
   });
 });
@@ -121,16 +126,16 @@ describe('Verify test RSA signatures', function () {
     let vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(e,n, '0x222c22737562223a22', '0x222c22617574685f74696d65223a');
 
     await expect(
-      vjwt['verifyJWT(bytes,bytes32)'](ethers.BigNumber.from(signature), ethers.utils.sha256(ethers.utils.toUtf8Bytes(headerRaw + '.' + payloadRaw)))
+      vjwt['verifyJWT(bytes,bytes32)'](ethers.BigNumber.from(signature), sha256FromString(headerRaw + '.' + payloadRaw))
       ).to.emit(vjwt, 'JWTVerification').withArgs(true);
 
     // make sure it doesn't work with wrong JWT or signature:
     await expect(
-      vjwt['verifyJWT(bytes,bytes32)'](ethers.BigNumber.from(signature),  ethers.utils.sha256(ethers.utils.toUtf8Bytes(headerRaw + ' : )' + payloadRaw)))
+      vjwt['verifyJWT(bytes,bytes32)'](ethers.BigNumber.from(signature),  sha256FromString(headerRaw + ' : )' + payloadRaw))
     ).to.emit(vjwt, 'JWTVerification').withArgs(false);
 
     await expect(
-      vjwt['verifyJWT(bytes,bytes32)'](ethers.BigNumber.from(badSignature), ethers.utils.sha256(ethers.utils.toUtf8Bytes(headerRaw + '.' + payloadRaw)))
+      vjwt['verifyJWT(bytes,bytes32)'](ethers.BigNumber.from(badSignature), sha256FromString(headerRaw + '.' + payloadRaw))
     ).to.emit(vjwt, 'JWTVerification').withArgs(false);
 
   });
@@ -144,11 +149,11 @@ describe('proof of prior knowledge', function () {
     this.message2 = 'Hey2'
     // Must use two unique hashing algorithms
     //  If not, hash(JWT) would be known, so then XOR(public key, hash(JWT)) can be replaced with XOR(frontrunner pubkey, hash(JWT)) by a frontrunner
-    this.publicHashedMessage1 = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(this.message1))
-    this.secretHashedMessage1 = ethers.utils.sha256(ethers.utils.toUtf8Bytes(this.message1))
+    this.publicHashedMessage1 = keccak256FromString(this.message1)
+    this.secretHashedMessage1 = sha256FromString(this.message1)
     
-    this.publicHashedMessage2 = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(this.message2))
-    this.secretHashedMessage2 = ethers.utils.sha256(ethers.utils.toUtf8Bytes(this.message2))
+    this.publicHashedMessage2 = keccak256FromString(this.message2)
+    this.secretHashedMessage2 = sha256FromString(this.message2)
 
     this.proof1 = await this.vjwt.XOR(this.secretHashedMessage1, this.owner.address)
     this.proof2 = await this.vjwt.XOR(this.secretHashedMessage2, this.owner.address)
@@ -219,8 +224,8 @@ describe('Integration tests for after successful proof commit', function () {
     // find indices of sandwich in raw payload:
     let [startIdx, endIdx] = search64.searchForPlainTextInBase64(Buffer.from(this.sandwich, 'hex').toString(), payloadRaw)
     this.startIdx = startIdx; this.endIdx = endIdx
-    let publicHashedMessage = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(this.message))
-    let secretHashedMessage = ethers.utils.sha256(ethers.utils.toUtf8Bytes(this.message))
+    let publicHashedMessage = keccak256FromString(this.message)
+    let secretHashedMessage = sha256FromString(this.message)
     let proof = await this.vjwt.XOR(secretHashedMessage, this.owner.address)
 
     await this.vjwt.commitJWTProof(proof)

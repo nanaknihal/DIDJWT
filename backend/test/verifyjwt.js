@@ -125,27 +125,27 @@ describe('proof of prior knowledge', function () {
     
   })
   it('Can prove prior knowledge of message (not JWT but can be)', async function () {
-    await this.vjwt.commitJWTProof(this.proof1, this.publicHashedMessage1)
+    await this.vjwt.commitJWTProof(this.proof1)
     await ethers.provider.send('evm_mine')
     expect(await this.vjwt.checkJWTProof(this.owner.address, this.message1)).to.equal(true)
   });
 
   it('Cannot prove prior knowledge of message (not JWT but can be) in one block', async function () {
-    await this.vjwt.commitJWTProof(this.proof1, this.publicHashedMessage1)
+    await this.vjwt.commitJWTProof(this.proof1)
     await expect(this.vjwt.checkJWTProof(this.owner.address, this.message1)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'You need to prove knowledge of JWT in a previous block, otherwise you can be frontrun'");
   });
 
   it('Cannot prove prior knowledge of different message (not JWT but can be)', async function () {
-    await this.vjwt.commitJWTProof(this.proof1, this.publicHashedMessage1)
+    await this.vjwt.commitJWTProof(this.proof1)
     await ethers.provider.send('evm_mine')
-    await expect(this.vjwt.checkJWTProof(this.owner.address, this.message2)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'JWT does not match JWT in proof");
+    await expect(this.vjwt.checkJWTProof(this.owner.address, this.message2)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'Proof not found. keccak256(pubkey ^ JWT) needs to have been submitted to commitJWTProof in a previous block'");
   });
 
   // This is not a great attack vector but good to check that it's impossible 
   it('Cannot prove prior knowledge of using different public key', async function () {
-    await this.vjwt.commitJWTProof(this.proof1, this.publicHashedMessage1)
+    await this.vjwt.commitJWTProof(this.proof1)
     await ethers.provider.send('evm_mine')
-    await expect(this.vjwt.checkJWTProof(this.addr1.address, this.message1)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'JWT does not match JWT in proof");
+    await expect(this.vjwt.checkJWTProof(this.addr1.address, this.message1)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'Proof not found. keccak256(pubkey ^ JWT) needs to have been submitted to commitJWTProof in a previous block'");
   });
 });
 
@@ -196,7 +196,7 @@ describe('Integration tests for after successful proof commit', function () {
     let secretHashedMessage = ethers.utils.sha256(ethers.utils.toUtf8Bytes(this.message))
     let proof = await this.vjwt.XOR(secretHashedMessage, this.owner.address)
 
-    await this.vjwt.commitJWTProof(proof, publicHashedMessage)
+    await this.vjwt.commitJWTProof(proof)
     await ethers.provider.send('evm_mine')
     console.log(startIdx, endIdx, 'start/end')
   });

@@ -4,10 +4,10 @@ pragma solidity ^0.8.0;
 import "hardhat/console.sol";
 import "contracts/Base64.sol"; 
 contract VerifyJWT {
-    struct JWTProof {
-      uint256 blockNumber;
-      bytes32 hashedJWT;
-    }
+    // struct JWTProof {
+    //   uint256 blockNumber;
+    //   bytes32 hashedJWT;
+    // }
 
     // creds are the identifier / index field in the JWT, e.g. ID or email (the rest of the JWT has lots of other information)
     mapping(address => string) public JWTForAddress;
@@ -19,9 +19,7 @@ contract VerifyJWT {
     address[] public registeredAddresses;
     bytes[] public registeredCreds;
     
-
-
-    mapping(bytes32 => JWTProof) public jwtProofs;
+    mapping(bytes32 => uint256) public proofAtBlock; // JWT proof => latest blocknumber when proof was submitted
 
     // web2 server's RS256 public key, split into exponent and modulus
     uint256 public e;
@@ -39,7 +37,7 @@ contract VerifyJWT {
    
 
 
-    bytes32[] public pendingVerification; //unneeded later, just for testing purposes
+    // bytes32[] public pendingVerification; //unneeded later, just for testing purposes
     bytes32[] public verifiedUsers;
 
     event modExpEventForTesting(bytes result_);
@@ -218,13 +216,9 @@ contract VerifyJWT {
       return _verifyJWT(e, n, signature, stringToBytes(jwt));
     }
 
-    // Not sure why I included jwtHash as another argument; it seems unecessary as you can just look up by jwtXORPubkey
-    function commitJWTProof(bytes32 jwtXORPubkey, bytes32 jwtHash) public {
-      jwtProofs[jwtXORPubkey] = JWTProof({
-        blockNumber: block.number, 
-        hashedJWT: jwtHash
-      });
-      pendingVerification.push(jwtXORPubkey);
+    function commitJWTProof(bytes32 jwtXORPubkey) public {
+      proofAtBlock[jwtXORPubkey] = block.number;
+      // pendingVerification.push(jwtXORPubkey);
     }
   // perhaps make private, but need it to be public to test
   function checkJWTProof(address a, string memory jwt) public view returns (bool) {
@@ -235,10 +229,11 @@ contract VerifyJWT {
     // hash(JWT) would be known, so then XOR(public key, hash(JWT)) can be replaced with XOR(frontrunner pubkey, hash(JWT)) by a frontrunner
     bytes32 k = bytes32Pubkey ^ sha256(stringToBytes(jwt));
 
-    JWTProof memory jp = jwtProofs[k];
+    // jwtProofs[k];
 
-    require(jp.blockNumber < block.number, "You need to prove knowledge of JWT in a previous block, otherwise you can be frontrun");
-    require(jp.hashedJWT == keccak256(stringToBytes(jwt)), "JWT does not match JWT in proof");
+    require(proofAtBlock[k] < block.number, "You need to prove knowledge of JWT in a previous block, otherwise you can be frontrun");
+    require(proofAtBlock[k] > 0 , "Proof not found. keccak256(pubkey ^ JWT) needs to have been submitted to commitJWTProof in a previous block");
+    // require(jp.hashedJWT == keccak256(stringToBytes(jwt)), "JWT does not match JWT in proof");
     return true;
   }
 

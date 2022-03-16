@@ -46,8 +46,11 @@ contract VerifyJWT {
     event JWTVerification(bool result_);
     event KeyAuthorization(bool result_);
     
+    bytes emptyBytes;
+    bytes32 immutable emptyBytesHash;
     // exponent and modulus comrpise the RSA public key of the web2 authenticator which signed the JWT. 
     constructor(uint256 exponent_, bytes memory modulus_, bytes memory bottomBread_, bytes memory topBread_){
+      emptyBytesHash = keccak256(emptyBytes);
       e = exponent_;
       n = modulus_;
       topBread = topBread_; 
@@ -215,6 +218,7 @@ contract VerifyJWT {
       return _verifyJWT(e, n, signature, stringToBytes(jwt));
     }
 
+    // Not sure why I included jwtHash as another argument; it seems unecessary as you can just look up by jwtXORPubkey
     function commitJWTProof(bytes32 jwtXORPubkey, bytes32 jwtHash) public {
       jwtProofs[jwtXORPubkey] = JWTProof({
         blockNumber: block.number, 
@@ -301,15 +305,21 @@ contract VerifyJWT {
     // make sure there is no previous entry for this JWT - it should only be usable once!
     require(addressForJWT[jwt] == address(0), "JWT can only be used on-chain once");
     
+    // update list of registered address and credentials (to keep track of who's registered), iff the address is not already registered
+    if(keccak256(credsForAddress[msg.sender]) == emptyBytesHash){
+      registeredAddresses.push(msg.sender);
+    }
+    if(addressForCreds[creds] == address(0)){
+      registeredCreds.push(creds);
+    }
+    
+
     // update hashmaps of addresses, credentials, and JWTs themselves
     addressForJWT[jwt] = msg.sender;
     addressForCreds[creds] = msg.sender;
     JWTForAddress[msg.sender] = jwt;
     credsForAddress[msg.sender] = creds;
 
-    // update list of registered address and credentials (to keep track of who's registered)
-    registeredAddresses.push(msg.sender);
-    registeredCreds.push(creds);
   }
 
 

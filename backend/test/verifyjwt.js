@@ -183,7 +183,7 @@ describe('Integration tests for after successful proof commit', function () {
 
     this.vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(e,n, '0x222c22737562223a22', '0x222c22617574685f74696d65223a');
     this.message = headerRaw + '.' + payloadRaw
-    this.payloadIdx = Buffer.from(headerRaw).length + Buffer.from('.').length
+    this.payloadIdx = Buffer.from(headerRaw).length + 1 //Buffer.from('.').length == 1
     console.log('payloadIdx is', this.payloadIdx);
     this.sandwich = await sandwichIDWithBreadFromContract('0000-0002-2308-9517', this.vjwt);
     this.wrongSandwich = await sandwichIDWithBreadFromContract('0200-0002-2308-9517', this.vjwt);

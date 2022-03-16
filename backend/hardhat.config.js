@@ -45,8 +45,6 @@ module.exports = {
     harmony: {
       url: "https://api.s0.b.hmny.io",
       accounts: [process.env.PRIVATE_KEY],
-      gas: 2100000,
-      gasPrice: 2000000000
     },
     arbitrum: {
       url: "https://rinkeby.arbitrum.io/rpc",
@@ -65,6 +63,10 @@ module.exports = {
       accounts: [process.env.PRIVATE_KEY],
       gas: 2100000,
       gasPrice: 2000000000
+    },
+    fantom: {
+      url: "https://rpc.testnet.fantom.network",
+      accounts: [process.env.PRIVATE_KEY],
     },
   }
 };

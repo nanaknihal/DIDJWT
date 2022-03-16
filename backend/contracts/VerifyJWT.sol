@@ -16,6 +16,9 @@ contract VerifyJWT {
     mapping(address => bytes) public credsForAddress;
     mapping(bytes => address) public addressForCreds;
 
+    address[] public registeredAddresses;
+    bytes[] public registeredCreds;
+    
 
 
     mapping(bytes32 => JWTProof) public jwtProofs;
@@ -199,8 +202,8 @@ contract VerifyJWT {
         emit modExpEventForTesting(o);
     }
     
-    // Made public for testing, ideally should be private
-    function _verifyJWT(uint256 e_, bytes memory n_, bytes memory signature_, bytes memory message_) public returns (bool) {
+    // returns whether JWT is signed by public key e_, n_, and emits an event with verification result
+    function _verifyJWT(uint256 e_, bytes memory n_, bytes memory signature_, bytes memory message_) private returns (bool) {
       bytes memory decrypted = modExp(signature_, e_, n_);
       bytes32 unpadded = bytesToLast32BytesAsBytes32Type(decrypted);
       bool verified = unpadded == sha256(message_);
@@ -297,11 +300,25 @@ contract VerifyJWT {
 
     // make sure there is no previous entry for this JWT - it should only be usable once!
     require(addressForJWT[jwt] == address(0), "JWT can only be used on-chain once");
+    
+    // update hashmaps of addresses, credentials, and JWTs themselves
     addressForJWT[jwt] = msg.sender;
     addressForCreds[creds] = msg.sender;
     JWTForAddress[msg.sender] = jwt;
     credsForAddress[msg.sender] = creds;
-    console.log("REMEMBER TO TEST THAT JWT CAN ONLY BE USED ONCE! THIS IS A NEW, UNTESTED FEATURE, JUST IMPLEMENTED");
+
+    // update list of registered address and credentials (to keep track of who's registered)
+    registeredAddresses.push(msg.sender);
+    registeredCreds.push(creds);
+  }
+
+
+  function getRegisteredCreds() external view returns (bytes[] memory) {
+    return registeredCreds;
+  }
+
+  function getRegisteredAddresses() external view returns (address[] memory) {
+    return registeredAddresses;
   }
 
   // This function is used for testing purposes and can be deleted later. It's better not to call it from the frontend for security reasons, as the data being XORed is often private. Calling it from the frontend leaks this data to your node provider

@@ -229,9 +229,21 @@ describe('Integration tests for after successful proof commit', function () {
   });
 
   it('Creds lookup works', async function () {
+    let registeredAddresses, registeredCreds;
+
+    [registeredAddresses, registeredCreds] = [await this.vjwt.getRegisteredAddresses(), await this.vjwt.getRegisteredCreds()];
+    expect(registeredAddresses.length).to.equal(0);
+    expect(registeredCreds.length).to.equal(0);
     expect(await this.vjwt.addressForCreds(Buffer.from('0000-0002-2308-9517'))).to.equal(ethers.constants.AddressZero);
+
     await this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message, this.payloadIdx, this.startIdx, this.endIdx, '0x'+this.sandwich);
+    
+    [registeredAddresses, registeredCreds] = [await this.vjwt.getRegisteredAddresses(), await this.vjwt.getRegisteredCreds()];
+    expect(registeredAddresses.length).to.equal(1);
+    expect(registeredCreds.length).to.equal(1);
     expect(await this.vjwt.addressForCreds(Buffer.from('0000-0002-2308-9517'))).to.equal(this.owner.address);
+    
+    expect(registeredAddresses[0] === this.owner.address).to.equal(true);
   });
 
     // TODO: add tests for address => creds,  address => JWT,  JWT => address

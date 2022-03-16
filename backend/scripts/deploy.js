@@ -22,7 +22,7 @@ async function deployORCID(){
       ethers.BigNumber.from(Buffer.from(pubkey.keys[0]['e'], 'base64url')), 
       Buffer.from(pubkey.keys[0]['n'], 'base64url')
     ]
-    let vjwt = await (await hre.ethers.getContractFactory('VerifyJWT')).deploy(e,n);
+    let vjwt = await (await hre.ethers.getContractFactory('VerifyJWT')).deploy(e,n,'0x222c22737562223a22','0x222c22617574685f74696d65223a');
     await vjwt.deployed();
     console.log('ORCID: ' + vjwt.address);
 }

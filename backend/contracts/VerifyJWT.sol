@@ -290,25 +290,8 @@ contract VerifyJWT {
     // there seems to be no advantage in lying about where the payload starts, but it may be more secure to implemenent a check here that the payload starts after a period
     
     bytes memory payload = sliceBytesMemory(jwtBytes, payloadIdxStart, jwtBytes.length);
-    console.log('payload is');
-    console.logBytes(payload);
     bytes memory b64decoded = Base64.decodeFromBytes(payload);
-    // bytes memory proposedIDSandwichBytes = stringToBytes(proposedIDSandwich);
-    console.logBytes(b64decoded);
-    console.logBytes(sliceBytesMemory(b64decoded, idxStart, idxEnd));
-    console.logBytes(proposedIDSandwich);
-
-
-
-    // make sure proposed id starts and ends with the required opening and closing strings (as byets):
-    console.log("CHECKPOINT");
-    console.log(proposedIDSandwich.length, topBread.length, proposedIDSandwich.length-topBread.length);
-        
-    console.logBytes(
-      sliceBytesMemory(proposedIDSandwich, proposedIDSandwich.length-topBread.length, proposedIDSandwich.length)
-    );
-    
-
+ 
     require(bytesAreEqual(
                           sliceBytesMemory(proposedIDSandwich, 0, bottomBread.length),
                           bottomBread
@@ -331,8 +314,6 @@ contract VerifyJWT {
            "proposedIDSandwich not found in JWT"
     );
     bytes memory creds = sliceBytesMemory(proposedIDSandwich, bottomBread.length, proposedIDSandwich.length - topBread.length);
-    console.log('CREDS');
-    console.logBytes(creds);
 
     // make sure there is no previous entry for this JWT - it should only be usable once!
     require(addressForJWT[jwt] == address(0), "JWT can only be used on-chain once");

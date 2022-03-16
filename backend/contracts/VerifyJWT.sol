@@ -211,10 +211,25 @@ contract VerifyJWT {
       emit JWTVerification(verified);
       return verified;
     }
-    
-    function verifyJWT(bytes memory signature, string memory jwt) public returns (bool) {
-      return _verifyJWT(e, n, signature, stringToBytes(jwt));
+
+    // Same as _verifyJWT but for private (hashed) JWT
+    function _verifyJWT(uint256 e_, bytes memory n_, bytes memory signature_, bytes32 msgHash_) private returns (bool) {
+      bytes memory decrypted = modExp(signature_, e_, n_);
+      bytes32 unpadded = bytesToLast32BytesAsBytes32Type(decrypted);
+      bool verified = unpadded == msgHash_;
+      emit JWTVerification(verified);
+      return verified;
     }
+    
+    function verifyJWT(bytes memory signature, string memory headerAndPayload) public returns (bool) {
+      return _verifyJWT(e, n, signature, stringToBytes(headerAndPayload));
+    }
+    
+    // Same as verifyJWT but for private (hashed) JWT
+    function verifyJWT(bytes memory signature, bytes32 headerAndPayloadHash) public returns (bool) {
+      return _verifyJWT(e, n, signature, headerAndPayloadHash);
+    }
+
 
     function commitJWTProof(bytes32 jwtXORPubkey) public {
       proofAtBlock[jwtXORPubkey] = block.number;
@@ -237,6 +252,15 @@ contract VerifyJWT {
     return true;
   }
 
+  // Same as checkJWTProof but for private (hashed) JWTs.
+  function checkJWTProof(address a, bytes32 jwtHash) public view returns (bool) {
+    bytes32 bytes32Pubkey = bytesToFirst32BytesAsBytes32Type(addressToBytes(a));
+    bytes32 k = bytes32Pubkey ^ jwtHash;
+    require(proofAtBlock[k] < block.number, "You need to prove knowledge of JWT in a previous block, otherwise you can be frontrun");
+    require(proofAtBlock[k] > 0 , "Proof not found. keccak256(pubkey ^ JWT) needs to have been submitted to commitJWTProof in a previous block");
+    return true;
+  }
+
   function _verify(address addr, bytes memory signature, string memory jwt) private returns (bool) { 
     // check whether JWT is valid 
     require(verifyJWT(signature, jwt),"Verification of JWT failed");
@@ -246,12 +270,25 @@ contract VerifyJWT {
     return true;
   }
 
+  // same as _verify but for private (hashed JWTs)
+  function _verify(address addr, bytes memory signature, bytes32 jwtHash) private returns (bool) { 
+    // check whether JWT is valid 
+    require(verifyJWT(signature, jwtHash),"Verification of JWT failed");
+    // check whether sender has already proved knowledge of the jwt
+    require(checkJWTProof(addr, jwtHash), "Proof of previous knowlege of JWT unsuccessful");
+    emit KeyAuthorization(true);
+    return true;
+  }
+
   // This is the endpoint a frontend should call. It takes a signature, JWT, IDSandwich (see comments), and start/end index of where the IDSandwhich can be found. It also takes a payload index start, as it must know the payload to decode the Base64 JWT
   function verifyMe(bytes memory signature, string memory jwt, uint payloadIdxStart, uint idxStart, uint idxEnd, bytes memory proposedIDSandwich) public { //also add  to verify that proposedId exists at jwt[idxStart:idxEnd]. If so, also verify that it starts with &id= and ends with &. So that we know it's a whole field and was actually the ID given
-    require(_verify(msg.sender, signature, jwt), "JWT Verification failed");
+    bytes memory jwtBytes = stringToBytes(jwt);
+    bytes32 jwtHash = sha256(jwtBytes);
+
+    require(_verify(msg.sender, signature, jwtHash), "JWT Verification failed");
 
     // there seems to be no advantage in lying about where the payload starts, but it may be more secure to implemenent a check here that the payload starts after a period
-    bytes memory jwtBytes = stringToBytes(jwt);
+    
     bytes memory payload = sliceBytesMemory(jwtBytes, payloadIdxStart, jwtBytes.length);
     console.log('payload is');
     console.logBytes(payload);

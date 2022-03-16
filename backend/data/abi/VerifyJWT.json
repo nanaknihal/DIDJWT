@@ -15,6 +15,7 @@
   "function bytesToFirst32BytesAsBytes32Type(bytes) pure returns (bytes32)",
   "function bytesToLast32BytesAsBytes32Type(bytes) pure returns (bytes32)",
   "function checkJWTProof(address,string) view returns (bool)",
+  "function checkJWTProof(address,bytes32) view returns (bool)",
   "function commitJWTProof(bytes32)",
   "function credsForAddress(address) view returns (bytes)",
   "function destructivelySliceBytesMemory(bytes,uint256,uint256) pure returns (bytes)",
@@ -32,6 +33,7 @@
   "function testSHA256OnJWT(string) pure returns (bytes32)",
   "function topBread() view returns (bytes)",
   "function verifiedUsers(uint256) view returns (bytes32)",
+  "function verifyJWT(bytes,bytes32) returns (bool)",
   "function verifyJWT(bytes,string) returns (bool)",
   "function verifyMe(bytes,string,uint256,uint256,uint256,bytes)"
 ]

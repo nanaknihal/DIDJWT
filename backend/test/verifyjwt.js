@@ -98,10 +98,10 @@ describe('Verify test RSA signatures', function () {
     ]
     let vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(e,n, '0x222c22737562223a22', '0x222c22617574685f74696d65223a');
 
-    await expect(vjwt.verifyJWT(ethers.BigNumber.from(signature), headerRaw + '.' + payloadRaw)).to.emit(vjwt, 'JWTVerification').withArgs(true);
+    await expect(vjwt['verifyJWT(bytes,string)'](ethers.BigNumber.from(signature), headerRaw + '.' + payloadRaw)).to.emit(vjwt, 'JWTVerification').withArgs(true);
     // make sure it doesn't work with wrong JWT or signature:
-    await expect(vjwt.verifyJWT(ethers.BigNumber.from(signature), headerRaw + ' : )' + payloadRaw)).to.emit(vjwt, 'JWTVerification').withArgs(false);
-    await expect(vjwt.verifyJWT(ethers.BigNumber.from(badSignature), headerRaw + '.' + payloadRaw)).to.emit(vjwt, 'JWTVerification').withArgs(false);
+    await expect(vjwt['verifyJWT(bytes,string)'](ethers.BigNumber.from(signature), headerRaw + ' : )' + payloadRaw)).to.emit(vjwt, 'JWTVerification').withArgs(false);
+    await expect(vjwt['verifyJWT(bytes,string)'](ethers.BigNumber.from(badSignature), headerRaw + '.' + payloadRaw)).to.emit(vjwt, 'JWTVerification').withArgs(false);
 
   });
 })
@@ -127,25 +127,25 @@ describe('proof of prior knowledge', function () {
   it('Can prove prior knowledge of message (not JWT but can be)', async function () {
     await this.vjwt.commitJWTProof(this.proof1)
     await ethers.provider.send('evm_mine')
-    expect(await this.vjwt.checkJWTProof(this.owner.address, this.message1)).to.equal(true)
+    expect(await this.vjwt['checkJWTProof(address,string)'](this.owner.address, this.message1)).to.equal(true)
   });
 
   it('Cannot prove prior knowledge of message (not JWT but can be) in one block', async function () {
     await this.vjwt.commitJWTProof(this.proof1)
-    await expect(this.vjwt.checkJWTProof(this.owner.address, this.message1)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'You need to prove knowledge of JWT in a previous block, otherwise you can be frontrun'");
+    await expect(this.vjwt['checkJWTProof(address,string)'](this.owner.address, this.message1)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'You need to prove knowledge of JWT in a previous block, otherwise you can be frontrun'");
   });
 
   it('Cannot prove prior knowledge of different message (not JWT but can be)', async function () {
     await this.vjwt.commitJWTProof(this.proof1)
     await ethers.provider.send('evm_mine')
-    await expect(this.vjwt.checkJWTProof(this.owner.address, this.message2)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'Proof not found. keccak256(pubkey ^ JWT) needs to have been submitted to commitJWTProof in a previous block'");
+    await expect(this.vjwt['checkJWTProof(address,string)'](this.owner.address, this.message2)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'Proof not found. keccak256(pubkey ^ JWT) needs to have been submitted to commitJWTProof in a previous block'");
   });
 
   // This is not a great attack vector but good to check that it's impossible 
   it('Cannot prove prior knowledge of using different public key', async function () {
     await this.vjwt.commitJWTProof(this.proof1)
     await ethers.provider.send('evm_mine')
-    await expect(this.vjwt.checkJWTProof(this.addr1.address, this.message1)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'Proof not found. keccak256(pubkey ^ JWT) needs to have been submitted to commitJWTProof in a previous block'");
+    await expect(this.vjwt['checkJWTProof(address,string)'](this.addr1.address, this.message1)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'Proof not found. keccak256(pubkey ^ JWT) needs to have been submitted to commitJWTProof in a previous block'");
   });
 });
 

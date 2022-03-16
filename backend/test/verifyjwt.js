@@ -184,21 +184,17 @@ describe('Integration tests for after successful proof commit', function () {
     this.vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(e,n, '0x222c22737562223a22', '0x222c22617574685f74696d65223a');
     this.message = headerRaw + '.' + payloadRaw
     this.payloadIdx = Buffer.from(headerRaw).length + 1 //Buffer.from('.').length == 1
-    console.log('payloadIdx is', this.payloadIdx);
     this.sandwich = await sandwichIDWithBreadFromContract('0000-0002-2308-9517', this.vjwt);
     this.wrongSandwich = await sandwichIDWithBreadFromContract('0200-0002-2308-9517', this.vjwt);
-    console.log('js.sandwich',  this.sandwich)
     // find indices of sandwich in raw payload:
     let [startIdx, endIdx] = search64.searchForPlainTextInBase64(Buffer.from(this.sandwich, 'hex').toString(), payloadRaw)
     this.startIdx = startIdx; this.endIdx = endIdx
-    // console.log(await getIndicesOfIDSandwich('0000-0002-2308-9517', payloadRaw, vjwt));
     let publicHashedMessage = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(this.message))
     let secretHashedMessage = ethers.utils.sha256(ethers.utils.toUtf8Bytes(this.message))
     let proof = await this.vjwt.XOR(secretHashedMessage, this.owner.address)
 
     await this.vjwt.commitJWTProof(proof)
     await ethers.provider.send('evm_mine')
-    console.log(startIdx, endIdx, 'start/end')
   });
   it('JWT works once but cannot be used twice (and emits JWTVerification event, which does NOT mean everything was successful -- it is just a testing event)', async function () {
     await expect(this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message, this.payloadIdx, this.startIdx, this.endIdx, '0x'+this.sandwich)).to.emit(this.vjwt, 'JWTVerification').withArgs(true);

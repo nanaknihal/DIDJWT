@@ -327,7 +327,7 @@ contract VerifyJWT {
 
   }
 
-  // User can just submit hash of 
+  // User can just submit hash of the header and payload, so they do not reveal any sensitive data! But they still prove their ownership of the JWT
   function verifyMePrivate(bytes memory signature, bytes32 headerAndPayloadHash) public { //also add  to verify that proposedId exists at jwt[idxStart:idxEnd]. If so, also verify that it starts with &id= and ends with &. So that we know it's a whole field and was actually the ID given
     // bytes memory jwtBytes = stringToBytes(jwt);
     // bytes32 jwtHash = sha256(jwtBytes);

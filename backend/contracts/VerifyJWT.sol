@@ -17,6 +17,7 @@ contract VerifyJWT {
     mapping(bytes => address) public addressForCreds;
 
     mapping (address => bytes32) public privateJWTForAddress; //also store hashes of JWT header.payloads for on-chain verified sovereign identity
+    mapping(address => mapping(address => bool)) public privateJWTAllowances; //who has access to a user's private credentials
 
     address[] public registeredAddresses;
     bytes[] public registeredCreds;
@@ -207,29 +208,21 @@ contract VerifyJWT {
     
     // returns whether JWT is signed by public key e_, n_, and emits an event with verification result
     function _verifyJWT(uint256 e_, bytes memory n_, bytes memory signature_, bytes memory message_) private returns (bool) {
-      bytes memory decrypted = modExp(signature_, e_, n_);
-      bytes32 unpadded = bytesToLast32BytesAsBytes32Type(decrypted);
-      bool verified = unpadded == sha256(message_);
+      bytes32 hashed = hashFromSignature(e_, n_, signature_);
+      bool verified = hashed == sha256(message_);
       emit JWTVerification(verified);
       return verified;
     }
 
-    // Same as _verifyJWT but for private (hashed) JWT
-    function _verifyJWT(uint256 e_, bytes memory n_, bytes memory signature_, bytes32 msgHash_) private returns (bool) {
-      bytes memory decrypted = modExp(signature_, e_, n_);
-      bytes32 unpadded = bytesToLast32BytesAsBytes32Type(decrypted);
-      bool verified = unpadded == msgHash_;
-      emit JWTVerification(verified);
-      return verified;
+    // Get the hash of the JWT from the signature
+    function hashFromSignature(uint256 e_, bytes memory n_, bytes memory signature_) public returns (bytes32) {
+      bytes memory encrypted = modExp(signature_, e_, n_);
+      bytes32 unpadded = bytesToLast32BytesAsBytes32Type(encrypted);
+      return unpadded;
     }
     
     function verifyJWT(bytes memory signature, string memory headerAndPayload) public returns (bool) {
       return _verifyJWT(e, n, signature, stringToBytes(headerAndPayload));
-    }
-    
-    // Same as verifyJWT but for private (hashed) JWT
-    function verifyJWT(bytes memory signature, bytes32 headerAndPayloadHash) public returns (bool) {
-      return _verifyJWT(e, n, signature, headerAndPayloadHash);
     }
 
 
@@ -262,19 +255,16 @@ contract VerifyJWT {
     bytes32 bytes32Pubkey = bytesToFirst32BytesAsBytes32Type(addressToBytes(a));
     bytes memory keyXORJWTHash = bytes32ToBytes(bytes32Pubkey ^ jwtHash);
     bytes32 k = sha256(keyXORJWTHash);
-    console.log('keyXORJWTHash is');
-    console.logBytes(keyXORJWTHash);
-    console.log('k is');
-    console.logBytes32(k);
     require(proofToBlock[k] < block.number, "You need to prove knowledge of JWT in a previous block, otherwise you can be frontrun");
     require(proofToBlock[k] > 0 , "Proof not found; it needs to have been submitted to commitJWTProof in a previous block");
     // require(jp.hashedJWT == keccak256(stringToBytes(jwt)), "JWT does not match JWT in proof");
     return true;
   }
 
-  function _verify(address addr, bytes memory signature, bytes32 jwtHash) private returns (bool) { 
+  function _verify(address addr, bytes memory signature, string memory jwt) private returns (bool) { 
+    bytes32 jwtHash = sha256(stringToBytes(jwt));
     // check whether JWT is valid 
-    require(verifyJWT(signature, jwtHash),"Verification of JWT failed");
+    require(verifyJWT(signature, jwt),"Verification of JWT failed");
     // check whether sender has already proved knowledge of the jwt
     require(checkJWTProof(addr, jwtHash), "Proof of previous knowlege of JWT unsuccessful");
     emit KeyAuthorization(true);
@@ -284,9 +274,8 @@ contract VerifyJWT {
   // This is the endpoint a frontend should call. It takes a signature, JWT, IDSandwich (see comments), and start/end index of where the IDSandwhich can be found. It also takes a payload index start, as it must know the payload to decode the Base64 JWT
   function verifyMe(bytes memory signature, string memory jwt, uint payloadIdxStart, uint idxStart, uint idxEnd, bytes memory proposedIDSandwich) public { //also add  to verify that proposedId exists at jwt[idxStart:idxEnd]. If so, also verify that it starts with &id= and ends with &. So that we know it's a whole field and was actually the ID given
     bytes memory jwtBytes = stringToBytes(jwt);
-    bytes32 jwtHash = sha256(jwtBytes);
 
-    require(_verify(msg.sender, signature, jwtHash), "JWT Verification failed");
+    require(_verify(msg.sender, signature, jwt), "JWT Verification failed");
 
     // there seems to be no advantage in lying about where the payload starts, but it may be more secure to implemenent a check here that the payload starts after a period
     
@@ -337,15 +326,23 @@ contract VerifyJWT {
   }
 
   // User can just submit hash of the header and payload, so they do not reveal any sensitive data! But they still prove their ownership of the JWT
-  function verifyMePrivate(bytes memory signature, bytes32 headerAndPayloadHash) public { //also add  to verify that proposedId exists at jwt[idxStart:idxEnd]. If so, also verify that it starts with &id= and ends with &. So that we know it's a whole field and was actually the ID given
-    // bytes memory jwtBytes = stringToBytes(jwt);
-    // bytes32 jwtHash = sha256(jwtBytes);
-
-    require(_verify(msg.sender, signature, headerAndPayloadHash), "JWT Verification failed");
-
+  // Note that this does not check that the headerAndPayloadHash is from a valid JWT -- it just checks that it matches the signature
+  function linkPrivateJWT(bytes memory signature, bytes32 headerAndPayloadHash) public { 
+    require(checkJWTProof(msg.sender, headerAndPayloadHash));
+    bytes32 hashed = hashFromSignature(e, n, signature);
+    require(hashed == headerAndPayloadHash, 'headerAndPayloadHash does not match the hash you proved knowledge of');
     // update hashmaps of addresses, credentials, and JWTs themselves
-    privateJWTForAddress[msg.sender] = headerAndPayloadHash;
+    privateJWTForAddress[msg.sender] = hashed;
 
+  }
+
+  // For accessing gating private credentials on the Lit Protocol
+  function setAccess(address viewer, bool value) public {
+    privateJWTAllowances[msg.sender][viewer] = value;
+  }
+  // For accessing private credentials on the Lit Protocol
+  function hasAccess(address owner, address viewer) public view returns (bool) {
+    return privateJWTAllowances[owner][viewer];
   }
 
 

@@ -55,8 +55,6 @@ module.exports = {
     avalanche: {
       url: "https://api.avax-test.network/ext/bc/C/rpc",
       accounts: [process.env.PRIVATE_KEY],
-      gas: 2100000,
-      gasPrice: 2000000000
     },
     ethereum: {
       url: "https://ropsten.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",

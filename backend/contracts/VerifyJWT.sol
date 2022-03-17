@@ -280,6 +280,14 @@ contract VerifyJWT {
     // there seems to be no advantage in lying about where the payload starts, but it may be more secure to implemenent a check here that the payload starts after a period
     
     bytes memory payload = sliceBytesMemory(jwtBytes, payloadIdxStart, jwtBytes.length);
+    bytes memory padByte = bytes('=');
+    // console.log('PAYLOAD CONC');
+    // console.log(payload.length);
+    // console.log(bytes.concat(payload, padByte).length);
+    while(payload.length % 4 != 0){
+      console.log(payload.length);
+      payload = bytes.concat(payload, padByte);
+    }
     bytes memory b64decoded = Base64.decodeFromBytes(payload);
  
     require(bytesAreEqual(
@@ -326,7 +334,8 @@ contract VerifyJWT {
   }
 
   // User can just submit hash of the header and payload, so they do not reveal any sensitive data! But they still prove their ownership of the JWT
-  // Note that this does not check that the headerAndPayloadHash is from a valid JWT -- it just checks that it matches the signature
+  // Note that this does not check that the headerAndPayloadHash is from a valid JWT -- it just checks that it matches the signature. To my knowledge,
+  // there is no way to check thath a hash is of a valid JWT. That would violate the purpose of a cryptographic hash function.
   function linkPrivateJWT(bytes memory signature, bytes32 headerAndPayloadHash) public { 
     require(checkJWTProof(msg.sender, headerAndPayloadHash));
     bytes32 hashed = hashFromSignature(e, n, signature);

@@ -21,7 +21,7 @@ contract VerifyJWT {
     address[] public registeredAddresses;
     bytes[] public registeredCreds;
     
-    mapping(bytes32 => uint256) public proofAtBlock; // JWT proof => latest blocknumber when proof was submitted
+    mapping(bytes32 => uint256) public proofToBlock; // JWT proof => latest blocknumber when proof was submitted
 
     // web2 server's RS256 public key, split into exponent and modulus
     uint256 public e;
@@ -233,33 +233,42 @@ contract VerifyJWT {
     }
 
 
-    function commitJWTProof(bytes32 jwtXORPubkey) public {
-      proofAtBlock[jwtXORPubkey] = block.number;
+    function commitJWTProof(bytes32 proof) public {
+      console.log('proof is');
+      console.logBytes32(proof);
+      proofToBlock[proof] = block.number;
       // pendingVerification.push(jwtXORPubkey);
     }
   // perhaps make private, but need it to be public to test
   function checkJWTProof(address a, string memory jwt) public view returns (bool) {
-    bytes32 bytes32Pubkey = bytesToFirst32BytesAsBytes32Type(addressToBytes(a));
-    
-    // check whether sender has already proved knowledge of the jwt in a previous block by XORing it with their public key and SHA2 of JWT. 
-    // CANNOT use same encryption algorithm that jp.hashedJWT is stored with; that would cause an attack vector:
-    // hash(JWT) would be known, so then XOR(public key, hash(JWT)) can be replaced with XOR(frontrunner pubkey, hash(JWT)) by a frontrunner
-    bytes32 k = bytes32Pubkey ^ sha256(stringToBytes(jwt));
-
-    // jwtProofs[k];
-
-    require(proofAtBlock[k] < block.number, "You need to prove knowledge of JWT in a previous block, otherwise you can be frontrun");
-    require(proofAtBlock[k] > 0 , "Proof not found. keccak256(pubkey ^ JWT) needs to have been submitted to commitJWTProof in a previous block");
-    // require(jp.hashedJWT == keccak256(stringToBytes(jwt)), "JWT does not match JWT in proof");
-    return true;
+    // console.log('checking proof');
+    // console.log(jwt);
+    // bytes32 bytes32Pubkey = bytesToFirst32BytesAsBytes32Type(addressToBytes(a));
+    // bytes memory keyXORJWTHash = bytes32ToBytes(bytes32Pubkey ^ sha256(stringToBytes(jwt)));
+    // bytes32 k = sha256(keyXORJWTHash);
+    // console.log('keyXORJWTHash is');
+    // console.logBytes(keyXORJWTHash);
+    // console.log('k is');
+    // console.logBytes32(k);
+    // require(proofToBlock[k] < block.number, "You need to prove knowledge of JWT in a previous block, otherwise you can be frontrun");
+    // require(proofToBlock[k] > 0 , "Proof not found; it needs to have been submitted to commitJWTProof in a previous block");
+    // // require(jp.hashedJWT == keccak256(stringToBytes(jwt)), "JWT does not match JWT in proof");
+    // return true;
+    return checkJWTProof(a, sha256(stringToBytes(jwt)));
   }
 
   // Same as checkJWTProof but for private (hashed) JWTs.
   function checkJWTProof(address a, bytes32 jwtHash) public view returns (bool) {
     bytes32 bytes32Pubkey = bytesToFirst32BytesAsBytes32Type(addressToBytes(a));
-    bytes32 k = bytes32Pubkey ^ jwtHash;
-    require(proofAtBlock[k] < block.number, "You need to prove knowledge of JWT in a previous block, otherwise you can be frontrun");
-    require(proofAtBlock[k] > 0 , "Proof not found. keccak256(pubkey ^ JWT) needs to have been submitted to commitJWTProof in a previous block");
+    bytes memory keyXORJWTHash = bytes32ToBytes(bytes32Pubkey ^ jwtHash);
+    bytes32 k = sha256(keyXORJWTHash);
+    console.log('keyXORJWTHash is');
+    console.logBytes(keyXORJWTHash);
+    console.log('k is');
+    console.logBytes32(k);
+    require(proofToBlock[k] < block.number, "You need to prove knowledge of JWT in a previous block, otherwise you can be frontrun");
+    require(proofToBlock[k] > 0 , "Proof not found; it needs to have been submitted to commitJWTProof in a previous block");
+    // require(jp.hashedJWT == keccak256(stringToBytes(jwt)), "JWT does not match JWT in proof");
     return true;
   }
 

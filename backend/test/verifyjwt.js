@@ -149,14 +149,17 @@ describe('proof of prior knowledge', function () {
     this.message2 = 'Hey2'
     // Must use two unique hashing algorithms
     //  If not, hash(JWT) would be known, so then XOR(public key, hash(JWT)) can be replaced with XOR(frontrunner pubkey, hash(JWT)) by a frontrunner
-    this.publicHashedMessage1 = keccak256FromString(this.message1)
-    this.secretHashedMessage1 = sha256FromString(this.message1)
+    // this.publicHashedMessage1 = keccak256FromString(this.message1)
+    // this.secretHashedMessage1 = sha256FromString(this.message1)
     
-    this.publicHashedMessage2 = keccak256FromString(this.message2)
-    this.secretHashedMessage2 = sha256FromString(this.message2)
+    // this.publicHashedMessage2 = keccak256FromString(this.message2)
+    // this.secretHashedMessage2 = sha256FromString(this.message2)
 
-    this.proof1 = await this.vjwt.XOR(this.secretHashedMessage1, this.owner.address)
-    this.proof2 = await this.vjwt.XOR(this.secretHashedMessage2, this.owner.address)
+    let hashedMessage1 = sha256FromString(this.message1)
+    let hashedMessage2 = sha256FromString(this.message1)
+    
+    this.proof1 = ethers.utils.sha256(await this.vjwt.XOR(hashedMessage1, this.owner.address))
+    this.proof2 = ethers.utils.sha256(await this.vjwt.XOR(hashedMessage2, this.owner.address))
     
   })
   it('Can prove prior knowledge of message (not JWT but can be)', async function () {
@@ -173,14 +176,14 @@ describe('proof of prior knowledge', function () {
   it('Cannot prove prior knowledge of different message (not JWT but can be)', async function () {
     await this.vjwt.commitJWTProof(this.proof1)
     await ethers.provider.send('evm_mine')
-    await expect(this.vjwt['checkJWTProof(address,string)'](this.owner.address, this.message2)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'Proof not found. keccak256(pubkey ^ JWT) needs to have been submitted to commitJWTProof in a previous block'");
+    await expect(this.vjwt['checkJWTProof(address,string)'](this.owner.address, this.message2)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'Proof not found; it needs to have been submitted to commitJWTProof in a previous block'");
   });
 
   // This is not a great attack vector but good to check that it's impossible 
   it('Cannot prove prior knowledge of using different public key', async function () {
     await this.vjwt.commitJWTProof(this.proof1)
     await ethers.provider.send('evm_mine')
-    await expect(this.vjwt['checkJWTProof(address,string)'](this.addr1.address, this.message1)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'Proof not found. keccak256(pubkey ^ JWT) needs to have been submitted to commitJWTProof in a previous block'");
+    await expect(this.vjwt['checkJWTProof(address,string)'](this.addr1.address, this.message1)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'Proof not found; it needs to have been submitted to commitJWTProof in a previous block'");
   });
 });
 
@@ -224,10 +227,13 @@ describe('Integration tests for after successful proof commit', function () {
     // find indices of sandwich in raw payload:
     let [startIdx, endIdx] = search64.searchForPlainTextInBase64(Buffer.from(this.sandwich, 'hex').toString(), payloadRaw)
     this.startIdx = startIdx; this.endIdx = endIdx
-    let publicHashedMessage = keccak256FromString(this.message)
-    let secretHashedMessage = sha256FromString(this.message)
-    let proof = await this.vjwt.XOR(secretHashedMessage, this.owner.address)
-
+    // let publicHashedMessage = keccak256FromString(this.message)
+    // let secretHashedMessage = sha256FromString(this.message)
+    let hashedMessage = sha256FromString(this.message)
+    let proof = ethers.utils.sha256(await this.vjwt.XOR(hashedMessage, this.owner.address))
+    console.log('XOR of hashed message and address is', await this.vjwt.XOR(hashedMessage, this.owner.address))
+    console.log('proof is ', proof)
+    
     await this.vjwt.commitJWTProof(proof)
     await ethers.provider.send('evm_mine')
   });
@@ -308,10 +314,11 @@ describe('Anonymous proof commit', function () {
     // find indices of sandwich in raw payload:
     let [startIdx, endIdx] = search64.searchForPlainTextInBase64(Buffer.from(this.sandwich, 'hex').toString(), payloadRaw)
     this.startIdx = startIdx; this.endIdx = endIdx
-    let publicHashedMessage = keccak256FromString(this.message)
-    let secretHashedMessage = sha256FromString(this.message)
-    let proof = await this.vjwt.XOR(secretHashedMessage, this.owner.address)
-
+    // let publicHashedMessage = keccak256FromString(this.message)
+    // let secretHashedMessage = sha256FromString(this.message)
+    let hashedMessage = sha256FromString(this.message)
+    let proof = ethers.utils.sha256(await this.vjwt.XOR(hashedMessage, this.owner.address))
+    console.log('proof is ', await this.vjwt.XOR(hashedMessage, this.owner.address), proof)
     await this.vjwt.commitJWTProof(proof)
     await ethers.provider.send('evm_mine')
   });

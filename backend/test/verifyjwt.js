@@ -190,116 +190,130 @@ describe('Frontend sandwiching', function(){
 });
 
 
-describe('Integration tests for after successful proof commit', function () {
-  beforeEach(async function(){
-    [this.owner, this.addr1] = await ethers.getSigners()
+for (const params of [
+  {
+    name : 'orcid',
+    idToken: 'eyJraWQiOiJwcm9kdWN0aW9uLW9yY2lkLW9yZy03aGRtZHN3YXJvc2czZ2p1am84YWd3dGF6Z2twMW9qcyIsImFsZyI6IlJTMjU2In0.eyJhdF9oYXNoIjoiX1RCT2VPZ2VZNzBPVnBHRWNDTi0zUSIsImF1ZCI6IkFQUC1NUExJMEZRUlVWRkVLTVlYIiwic3ViIjoiMDAwMC0wMDAyLTIzMDgtOTUxNyIsImF1dGhfdGltZSI6MTY0NDgzMDE5MSwiaXNzIjoiaHR0cHM6XC9cL29yY2lkLm9yZyIsImV4cCI6MTY0NDkxODUzNywiZ2l2ZW5fbmFtZSI6Ik5hbmFrIE5paGFsIiwiaWF0IjoxNjQ0ODMyMTM3LCJmYW1pbHlfbmFtZSI6IktoYWxzYSIsImp0aSI6IjcxM2RjMGZiLTMwZTAtNDM0Mi05ODFjLTNlYjJiMTRiODM0OCJ9.VXNSFbSJSdOiX7n-hWB6Vh30L1IkOLiNs2hBTuUDZ4oDB-cL6AJ8QjX7wj9Nj_lGcq1kjIfFLhowo8Jy_mzMGIFU8KTZvinSA-A-tJkXOUEvjUNjd0OfQJnVVJ63wvp9gSEj419HZ13Lc2ci9CRY7efQCYeelvQOQvpdrZsRLiQ_XndeDw2hDLAmI7YrYrLMy1zQY9rD4uAlBa56RVD7me6t47jEOOJJMAs3PC8UZ6pYyNc0zAjQ8Vapqz7gxeCN-iya91YI1AIE8Ut19hGgVRa9N7l-aUielPAlzss0Qbeyvl0KTRuZWnLUSrOz8y9oGxVBCUmStEOrVrAhmkMS8A',
+    correctID : '0000-0002-2308-9517',
+    constructorArgs : [eOrcid, nOrcid, orcidKid, orcidBotomBread, orcidTopBread],
+  },
+  {
+    name : 'google',
+    idToken: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjcyOTE4OTQ1MGQ0OTAyODU3MDQyNTI2NmYwM2U3MzdmNDVhZjI5MzIiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJhY2NvdW50cy5nb29nbGUuY29tIiwiYXpwIjoiMjU0OTg0NTAwNTY2LTNxaXM1NG1vZmVnNWVkb2dhdWpycDhyYjdwYnA5cXRuLmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwiYXVkIjoiMjU0OTg0NTAwNTY2LTNxaXM1NG1vZmVnNWVkb2dhdWpycDhyYjdwYnA5cXRuLmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwic3ViIjoiMTAwNzg3ODQ0NDczMTcyMjk4NTQzIiwiZW1haWwiOiJuYW5ha25paGFsQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJhdF9oYXNoIjoiMDREZXRTaGNSYUE4OWxlcEQzdWRnUSIsIm5hbWUiOiJOYW5hayBOaWhhbCBLaGFsc2EiLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUFUWEFKdzRnMVA3UFZUS2ZWUU1ldFdtUVgxQlNvWjlPWTRVUWtLcjdsTDQ9czk2LWMiLCJnaXZlbl9uYW1lIjoiTmFuYWsgTmloYWwiLCJmYW1pbHlfbmFtZSI6IktoYWxzYSIsImxvY2FsZSI6ImVuIiwiaWF0IjoxNjQ3NjYzNDk4LCJleHAiOjE2NDc2NjcwOTgsImp0aSI6IjE4ZmRmMGQ2M2VhYjI4YjRlYmY0NmFiMDMzZTM5OTU3NmE5MTJlZGUifQ.YqmOub03zNmloAcFvZE0E-4Gt2Y5fr_9XQLUYqXQ24X_GJaJh0HSQXouJeSXjnk8PT6E1FnPd89QAgwDvE_qxAoOvW7VKDycVapOeDtKdTQ-QpAn-ExE0Pvqgx1iaGRZFDS4DWESX1ZsQIBAB_MHK_ZFdAnOjeFzImuMkB1PZLY99przSaM8AEyvWn8wfEgdmkdoJERBXF7xJI2dfA9mTRjlQvhSC4K060bTJbUYug4sQLrvo53CsDjvXRnodnCB81EVWZUbf5B9dG__kebI3AjedKUcPb2wofpX_B7uAyVlD7Au3APEbZP7Asle0Bi76hDNGPQbLvR_nGWLoySfCQ',
+    correctID : 'nanaknihal@gmail.com',
+    constructorArgs : [eGoogle, nGoogle, googleKid, googleBottomBread, googleTopBread],
+  }
+]){
 
-    const orig = 'access_token=117a16aa-f766-4079-ba50-faaf0a09c864&token_type=bearer&expires_in=599&tokenVersion=1&persistent=true&id_token=eyJraWQiOiJwcm9kdWN0aW9uLW9yY2lkLW9yZy03aGRtZHN3YXJvc2czZ2p1am84YWd3dGF6Z2twMW9qcyIsImFsZyI6IlJTMjU2In0.eyJhdF9oYXNoIjoiX1RCT2VPZ2VZNzBPVnBHRWNDTi0zUSIsImF1ZCI6IkFQUC1NUExJMEZRUlVWRkVLTVlYIiwic3ViIjoiMDAwMC0wMDAyLTIzMDgtOTUxNyIsImF1dGhfdGltZSI6MTY0NDgzMDE5MSwiaXNzIjoiaHR0cHM6XC9cL29yY2lkLm9yZyIsImV4cCI6MTY0NDkxODUzNywiZ2l2ZW5fbmFtZSI6Ik5hbmFrIE5paGFsIiwiaWF0IjoxNjQ0ODMyMTM3LCJmYW1pbHlfbmFtZSI6IktoYWxzYSIsImp0aSI6IjcxM2RjMGZiLTMwZTAtNDM0Mi05ODFjLTNlYjJiMTRiODM0OCJ9.VXNSFbSJSdOiX7n-hWB6Vh30L1IkOLiNs2hBTuUDZ4oDB-cL6AJ8QjX7wj9Nj_lGcq1kjIfFLhowo8Jy_mzMGIFU8KTZvinSA-A-tJkXOUEvjUNjd0OfQJnVVJ63wvp9gSEj419HZ13Lc2ci9CRY7efQCYeelvQOQvpdrZsRLiQ_XndeDw2hDLAmI7YrYrLMy1zQY9rD4uAlBa56RVD7me6t47jEOOJJMAs3PC8UZ6pYyNc0zAjQ8Vapqz7gxeCN-iya91YI1AIE8Ut19hGgVRa9N7l-aUielPAlzss0Qbeyvl0KTRuZWnLUSrOz8y9oGxVBCUmStEOrVrAhmkMS8A&tokenId=254337461'
-    let parsedToJSON = {}
-    orig.split('&').map(x=>{let [key, value] = x.split('='); parsedToJSON[key] = value});
-    let [headerRaw, payloadRaw, signatureRaw] = parsedToJSON['id_token'].split('.');
-    // let [header, payload] = [headerRaw, payloadRaw].map(x => JSON.parse(atob(x)));
-    // let payload = atob(payloadRaw);
-    this.signature = Buffer.from(signatureRaw, 'base64url')
-
-    this.vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(eOrcid, nOrcid, orcidKid, orcidBotomBread, orcidTopBread);
-    this.message = headerRaw + '.' + payloadRaw
-    this.payloadIdx = Buffer.from(headerRaw).length + 1 //Buffer.from('.').length == 1
-    this.sandwich = await sandwichIDWithBreadFromContract('0000-0002-2308-9517', this.vjwt);
-    this.wrongSandwich = await sandwichIDWithBreadFromContract('0200-0002-2308-9517', this.vjwt);
-    // find indices of sandwich in raw payload:
-    let [startIdx, endIdx] = search64.searchForPlainTextInBase64(Buffer.from(this.sandwich, 'hex').toString(), payloadRaw)
-    this.startIdx = startIdx; this.endIdx = endIdx
-    // let publicHashedMessage = keccak256FromString(this.message)
-    // let secretHashedMessage = sha256FromString(this.message)
-    let hashedMessage = sha256FromString(this.message)
-    let proof = ethers.utils.sha256(await this.vjwt.XOR(hashedMessage, this.owner.address))
-    console.log('XOR of hashed message and address is', await this.vjwt.XOR(hashedMessage, this.owner.address))
-    console.log('proof is ', proof)
-    
-    await this.vjwt.commitJWTProof(proof)
-    await ethers.provider.send('evm_mine')
-  });
-  it('JWT works once but cannot be used twice (and emits JWTVerification event, which does NOT mean everything was successful -- it is just a testing event)', async function () {
-    await expect(this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message, this.payloadIdx, this.startIdx, this.endIdx, '0x'+this.sandwich)).to.emit(this.vjwt, 'JWTVerification').withArgs(true);
-    await expect(this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message, this.payloadIdx, this.startIdx, this.endIdx, '0x'+this.sandwich)).to.be.revertedWith('JWT can only be used on-chain once')
-  });
-
-  it('JWT emits KeyAuthorization event, another testing event which does NOT mean everything was successsful -- just that some intermediary stages were successful', async function () {
-    await expect(this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message, this.payloadIdx, this.startIdx, this.endIdx, '0x'+this.sandwich)).to.emit(this.vjwt, 'KeyAuthorization').withArgs(true); 
-    });
-
-  it('Wrong message fails', async function () {
-    await expect(this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message.replace('a', 'b'), this.payloadIdx, this.startIdx, this.endIdx, '0x'+this.sandwich)).to.be.revertedWith('Verification of JWT failed');
-  });
-
-  it('Wrong indices fail (this could be more comprehensive and more unit-like)', async function () {
-    await expect(this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message, this.payloadIdx - 1, this.startIdx, this.endIdx, '0x'+this.sandwich)).to.be.revertedWith('proposedIDSandwich not found in JWT');
-    await expect(this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message, this.payloadIdx + 1, this.startIdx, this.endIdx, '0x'+this.sandwich)).to.be.revertedWith('proposedIDSandwich not found in JWT');
-    await expect(this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message, this.payloadIdx, this.startIdx + 1, this.endIdx, '0x'+this.sandwich)).to.be.revertedWith('proposedIDSandwich not found in JWT');
-    await expect(this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message, this.payloadIdx, this.startIdx - 1, this.endIdx, '0x'+this.sandwich)).to.be.revertedWith('proposedIDSandwich not found in JWT');
-    await expect(this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message, this.payloadIdx, this.startIdx, this.endIdx + 1, '0x'+this.sandwich)).to.be.revertedWith('proposedIDSandwich not found in JWT');
-    await expect(this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message, this.payloadIdx, this.startIdx, this.endIdx - 1, '0x'+this.sandwich)).to.be.revertedWith('proposedIDSandwich not found in JWT');
-  });
-
-  it('Wrong sandwich fails', async function () {
-    await expect(this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message, this.payloadIdx, this.startIdx, this.endIdx, '0x'+this.sandwich+'e6')).to.be.revertedWith('Failed to find correct top bread in sandwich');
-    await expect(this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message, this.payloadIdx, this.startIdx, this.endIdx, '0xb5'+this.sandwich)).to.be.revertedWith('Failed to find correct bottom bread in sandwich');
-    await expect(this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message, this.payloadIdx, this.startIdx, this.endIdx, '0x'+this.wrongSandwich)).to.be.revertedWith('proposedIDSandwich not found in JWT');
-  });
-
-  it('Creds lookup works', async function () {
-    let registeredAddresses, registeredCreds;
-
-    [registeredAddresses, registeredCreds] = [await this.vjwt.getRegisteredAddresses(), await this.vjwt.getRegisteredCreds()];
-    expect(registeredAddresses.length).to.equal(0);
-    expect(registeredCreds.length).to.equal(0);
-    expect(await this.vjwt.addressForCreds(Buffer.from('0000-0002-2308-9517'))).to.equal(ethers.constants.AddressZero);
-
-    await this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message, this.payloadIdx, this.startIdx, this.endIdx, '0x'+this.sandwich);
-    
-    [registeredAddresses, registeredCreds] = [await this.vjwt.getRegisteredAddresses(), await this.vjwt.getRegisteredCreds()];
-    expect(registeredAddresses.length).to.equal(1);
-    expect(registeredCreds.length).to.equal(1);
-    expect(await this.vjwt.addressForCreds(Buffer.from('0000-0002-2308-9517'))).to.equal(this.owner.address);
-    
-    expect(registeredAddresses[0] === this.owner.address).to.equal(true);
-  });
-
+  describe('Integration tests for after successful proof commit with params ' + params, function () {
+    beforeEach(async function(){
+      [this.owner, this.addr1] = await ethers.getSigners()
   
-    // TODO: add tests for address => creds,  address => JWT,  JWT => address
-
-
-});
-
-describe('Anonymous proof commit', function () {
-  before(async function(){
-    [this.owner, this.addr1] = await ethers.getSigners()
-
-    const orig = 'access_token=117a16aa-f766-4079-ba50-faaf0a09c864&token_type=bearer&expires_in=599&tokenVersion=1&persistent=true&id_token=eyJraWQiOiJwcm9kdWN0aW9uLW9yY2lkLW9yZy03aGRtZHN3YXJvc2czZ2p1am84YWd3dGF6Z2twMW9qcyIsImFsZyI6IlJTMjU2In0.eyJhdF9oYXNoIjoiX1RCT2VPZ2VZNzBPVnBHRWNDTi0zUSIsImF1ZCI6IkFQUC1NUExJMEZRUlVWRkVLTVlYIiwic3ViIjoiMDAwMC0wMDAyLTIzMDgtOTUxNyIsImF1dGhfdGltZSI6MTY0NDgzMDE5MSwiaXNzIjoiaHR0cHM6XC9cL29yY2lkLm9yZyIsImV4cCI6MTY0NDkxODUzNywiZ2l2ZW5fbmFtZSI6Ik5hbmFrIE5paGFsIiwiaWF0IjoxNjQ0ODMyMTM3LCJmYW1pbHlfbmFtZSI6IktoYWxzYSIsImp0aSI6IjcxM2RjMGZiLTMwZTAtNDM0Mi05ODFjLTNlYjJiMTRiODM0OCJ9.VXNSFbSJSdOiX7n-hWB6Vh30L1IkOLiNs2hBTuUDZ4oDB-cL6AJ8QjX7wj9Nj_lGcq1kjIfFLhowo8Jy_mzMGIFU8KTZvinSA-A-tJkXOUEvjUNjd0OfQJnVVJ63wvp9gSEj419HZ13Lc2ci9CRY7efQCYeelvQOQvpdrZsRLiQ_XndeDw2hDLAmI7YrYrLMy1zQY9rD4uAlBa56RVD7me6t47jEOOJJMAs3PC8UZ6pYyNc0zAjQ8Vapqz7gxeCN-iya91YI1AIE8Ut19hGgVRa9N7l-aUielPAlzss0Qbeyvl0KTRuZWnLUSrOz8y9oGxVBCUmStEOrVrAhmkMS8A&tokenId=254337461'
-    let parsedToJSON = {}
-    orig.split('&').map(x=>{let [key, value] = x.split('='); parsedToJSON[key] = value});
-    let [headerRaw, payloadRaw, signatureRaw] = parsedToJSON['id_token'].split('.');
-    // let [header, payload] = [headerRaw, payloadRaw].map(x => JSON.parse(atob(x)));
-    // let payload = atob(payloadRaw);
-    this.signature = Buffer.from(signatureRaw, 'base64url')
-    this.vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(eOrcid, nOrcid, orcidKid, orcidBotomBread, orcidTopBread);
-    this.message = sha256FromString(headerRaw + '.' + payloadRaw)
-    this.payloadIdx = Buffer.from(headerRaw).length + 1 //Buffer.from('.').length == 1
-    this.sandwich = await sandwichIDWithBreadFromContract('0000-0002-2308-9517', this.vjwt);
-    this.wrongSandwich = await sandwichIDWithBreadFromContract('0200-0002-2308-9517', this.vjwt);
-    // find indices of sandwich in raw payload:
-    let [startIdx, endIdx] = search64.searchForPlainTextInBase64(Buffer.from(this.sandwich, 'hex').toString(), payloadRaw)
-    this.startIdx = startIdx; this.endIdx = endIdx
-    // let publicHashedMessage = keccak256FromString(this.message)
-    // let secretHashedMessage = sha256FromString(this.message)
-    let hashedMessage = sha256FromString(this.message)
-    let proof = ethers.utils.sha256(await this.vjwt.XOR(hashedMessage, this.owner.address))
-    console.log('proof is ', await this.vjwt.XOR(hashedMessage, this.owner.address), proof)
-    await this.vjwt.commitJWTProof(proof)
-    await ethers.provider.send('evm_mine')
+      let [headerRaw, payloadRaw, signatureRaw] = params.idToken.split('.');
+      // let [header, payload] = [headerRaw, payloadRaw].map(x => JSON.parse(atob(x)));
+      // let payload = atob(payloadRaw);
+      this.signature = Buffer.from(signatureRaw, 'base64url')
+  
+      this.vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(...params.constructorArgs);
+      this.message = headerRaw + '.' + payloadRaw
+      this.payloadIdx = Buffer.from(headerRaw).length + 1 //Buffer.from('.').length == 1
+      this.sandwich = await sandwichIDWithBreadFromContract(params.correctID, this.vjwt);
+      this.wrongSandwich = await sandwichIDWithBreadFromContract('0200-0002-2308-9517', this.vjwt);
+      // find indices of sandwich in raw payload:
+      let [startIdx, endIdx] = search64.searchForPlainTextInBase64(Buffer.from(this.sandwich, 'hex').toString(), payloadRaw)
+      this.startIdx = startIdx; this.endIdx = endIdx
+      // let publicHashedMessage = keccak256FromString(this.message)
+      // let secretHashedMessage = sha256FromString(this.message)
+      let hashedMessage = sha256FromString(this.message)
+      let proof = ethers.utils.sha256(await this.vjwt.XOR(hashedMessage, this.owner.address))
+      console.log('XOR of hashed message and address is', await this.vjwt.XOR(hashedMessage, this.owner.address))
+      console.log('proof is ', proof)
+      
+      await this.vjwt.commitJWTProof(proof)
+      await ethers.provider.send('evm_mine')
+    });
+    it('JWT works once but cannot be used twice (and emits JWTVerification event, which does NOT mean everything was successful -- it is just a testing event)', async function () {
+      await expect(this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message, this.payloadIdx, this.startIdx, this.endIdx, '0x'+this.sandwich)).to.emit(this.vjwt, 'JWTVerification').withArgs(true);
+      await expect(this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message, this.payloadIdx, this.startIdx, this.endIdx, '0x'+this.sandwich)).to.be.revertedWith('JWT can only be used on-chain once')
+    });
+  
+    it('JWT emits KeyAuthorization event, another testing event which does NOT mean everything was successsful -- just that some intermediary stages were successful', async function () {
+      await expect(this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message, this.payloadIdx, this.startIdx, this.endIdx, '0x'+this.sandwich)).to.emit(this.vjwt, 'KeyAuthorization').withArgs(true); 
+      });
+  
+    it('Wrong message fails', async function () {
+      await expect(this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message.replace('a', 'b'), this.payloadIdx, this.startIdx, this.endIdx, '0x'+this.sandwich)).to.be.revertedWith('Verification of JWT failed');
+    });
+  
+    it('Wrong indices fail (this could be more comprehensive and more unit-like)', async function () {
+      await expect(this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message, this.payloadIdx - 1, this.startIdx, this.endIdx, '0x'+this.sandwich)).to.be.revertedWith('proposedIDSandwich not found in JWT');
+      await expect(this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message, this.payloadIdx + 1, this.startIdx, this.endIdx, '0x'+this.sandwich)).to.be.revertedWith('proposedIDSandwich not found in JWT');
+      await expect(this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message, this.payloadIdx, this.startIdx + 1, this.endIdx, '0x'+this.sandwich)).to.be.revertedWith('proposedIDSandwich not found in JWT');
+      await expect(this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message, this.payloadIdx, this.startIdx - 1, this.endIdx, '0x'+this.sandwich)).to.be.revertedWith('proposedIDSandwich not found in JWT');
+      await expect(this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message, this.payloadIdx, this.startIdx, this.endIdx + 1, '0x'+this.sandwich)).to.be.revertedWith('proposedIDSandwich not found in JWT');
+      await expect(this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message, this.payloadIdx, this.startIdx, this.endIdx - 1, '0x'+this.sandwich)).to.be.revertedWith('proposedIDSandwich not found in JWT');
+    });
+  
+    it('Wrong sandwich fails', async function () {
+      await expect(this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message, this.payloadIdx, this.startIdx, this.endIdx, '0x'+this.sandwich+'e6')).to.be.revertedWith('Failed to find correct top bread in sandwich');
+      await expect(this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message, this.payloadIdx, this.startIdx, this.endIdx, '0xb5'+this.sandwich)).to.be.revertedWith('Failed to find correct bottom bread in sandwich');
+      await expect(this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message, this.payloadIdx, this.startIdx, this.endIdx, '0x'+this.wrongSandwich)).to.be.revertedWith('proposedIDSandwich not found in JWT');
+    });
+  
+    it('Creds lookup works', async function () {
+      let registeredAddresses, registeredCreds;
+  
+      [registeredAddresses, registeredCreds] = [await this.vjwt.getRegisteredAddresses(), await this.vjwt.getRegisteredCreds()];
+      expect(registeredAddresses.length).to.equal(0);
+      expect(registeredCreds.length).to.equal(0);
+      expect(await this.vjwt.addressForCreds(Buffer.from('0000-0002-2308-9517'))).to.equal(ethers.constants.AddressZero);
+  
+      await this.vjwt.verifyMe(ethers.BigNumber.from(this.signature), this.message, this.payloadIdx, this.startIdx, this.endIdx, '0x'+this.sandwich);
+      
+      [registeredAddresses, registeredCreds] = [await this.vjwt.getRegisteredAddresses(), await this.vjwt.getRegisteredCreds()];
+      expect(registeredAddresses.length).to.equal(1);
+      expect(registeredCreds.length).to.equal(1);
+      expect(await this.vjwt.addressForCreds(Buffer.from(params.correctID))).to.equal(this.owner.address);
+      
+      expect(registeredAddresses[0] === this.owner.address).to.equal(true);
+    });
+  
+    
+      // TODO: add tests for address => creds,  address => JWT,  JWT => address
+  
+  
   });
-  it('jfakjfak', async function (){
-    console.log('a;jfak;sjfhaksjhdfa')
-  })
-});
+}
+
+
+// describe('Anonymous proof commit', function () {
+//   before(async function(){
+//     [this.owner, this.addr1] = await ethers.getSigners()
+
+//     const orig = 'access_token=117a16aa-f766-4079-ba50-faaf0a09c864&token_type=bearer&expires_in=599&tokenVersion=1&persistent=true&id_token=eyJraWQiOiJwcm9kdWN0aW9uLW9yY2lkLW9yZy03aGRtZHN3YXJvc2czZ2p1am84YWd3dGF6Z2twMW9qcyIsImFsZyI6IlJTMjU2In0.eyJhdF9oYXNoIjoiX1RCT2VPZ2VZNzBPVnBHRWNDTi0zUSIsImF1ZCI6IkFQUC1NUExJMEZRUlVWRkVLTVlYIiwic3ViIjoiMDAwMC0wMDAyLTIzMDgtOTUxNyIsImF1dGhfdGltZSI6MTY0NDgzMDE5MSwiaXNzIjoiaHR0cHM6XC9cL29yY2lkLm9yZyIsImV4cCI6MTY0NDkxODUzNywiZ2l2ZW5fbmFtZSI6Ik5hbmFrIE5paGFsIiwiaWF0IjoxNjQ0ODMyMTM3LCJmYW1pbHlfbmFtZSI6IktoYWxzYSIsImp0aSI6IjcxM2RjMGZiLTMwZTAtNDM0Mi05ODFjLTNlYjJiMTRiODM0OCJ9.VXNSFbSJSdOiX7n-hWB6Vh30L1IkOLiNs2hBTuUDZ4oDB-cL6AJ8QjX7wj9Nj_lGcq1kjIfFLhowo8Jy_mzMGIFU8KTZvinSA-A-tJkXOUEvjUNjd0OfQJnVVJ63wvp9gSEj419HZ13Lc2ci9CRY7efQCYeelvQOQvpdrZsRLiQ_XndeDw2hDLAmI7YrYrLMy1zQY9rD4uAlBa56RVD7me6t47jEOOJJMAs3PC8UZ6pYyNc0zAjQ8Vapqz7gxeCN-iya91YI1AIE8Ut19hGgVRa9N7l-aUielPAlzss0Qbeyvl0KTRuZWnLUSrOz8y9oGxVBCUmStEOrVrAhmkMS8A&tokenId=254337461'
+//     let parsedToJSON = {}
+//     orig.split('&').map(x=>{let [key, value] = x.split('='); parsedToJSON[key] = value});
+//     let [headerRaw, payloadRaw, signatureRaw] = parsedToJSON['id_token'].split('.');
+//     // let [header, payload] = [headerRaw, payloadRaw].map(x => JSON.parse(atob(x)));
+//     // let payload = atob(payloadRaw);
+//     this.signature = Buffer.from(signatureRaw, 'base64url')
+//     this.vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(eOrcid, nOrcid, orcidKid, orcidBotomBread, orcidTopBread);
+//     this.message = sha256FromString(headerRaw + '.' + payloadRaw)
+//     this.payloadIdx = Buffer.from(headerRaw).length + 1 //Buffer.from('.').length == 1
+//     this.sandwich = await sandwichIDWithBreadFromContract('0000-0002-2308-9517', this.vjwt);
+//     this.wrongSandwich = await sandwichIDWithBreadFromContract('0200-0002-2308-9517', this.vjwt);
+//     // find indices of sandwich in raw payload:
+//     let [startIdx, endIdx] = search64.searchForPlainTextInBase64(Buffer.from(this.sandwich, 'hex').toString(), payloadRaw)
+//     this.startIdx = startIdx; this.endIdx = endIdx
+//     // let publicHashedMessage = keccak256FromString(this.message)
+//     // let secretHashedMessage = sha256FromString(this.message)
+//     let hashedMessage = sha256FromString(this.message)
+//     let proof = ethers.utils.sha256(await this.vjwt.XOR(hashedMessage, this.owner.address))
+//     console.log('proof is ', await this.vjwt.XOR(hashedMessage, this.owner.address), proof)
+//     await this.vjwt.commitJWTProof(proof)
+//     await ethers.provider.send('evm_mine')
+//   });
+//   it('jfakjfak', async function (){
+//     console.log('still need to implement this')
+//   })
+// });

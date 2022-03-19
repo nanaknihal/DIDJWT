@@ -1,5 +1,5 @@
 [
-  "constructor(uint256,bytes,bytes,bytes)",
+  "constructor(uint256,bytes,string,bytes,bytes)",
   "event JWTVerification(bool)",
   "event KeyAuthorization(bool)",
   "event modExpEventForTesting(bytes)",
@@ -24,6 +24,7 @@
   "function getRegisteredCreds() view returns (bytes[])",
   "function hasAccess(address,address) view returns (bool)",
   "function hashFromSignature(uint256,bytes,bytes) returns (bytes32)",
+  "function kid() view returns (string)",
   "function linkPrivateJWT(bytes,bytes32)",
   "function modExp(bytes,uint256,bytes) returns (bytes)",
   "function n() view returns (bytes)",

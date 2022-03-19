@@ -7,6 +7,9 @@ const sha256FromString = x => ethers.utils.sha256(ethers.utils.toUtf8Bytes(x))
 // input: x (string); output: sha256 of string
 const keccak256FromString = x => ethers.utils.keccak256(ethers.utils.toUtf8Bytes(x))
 
+const orcidKid = '7hdmdswarosg3gjujo8agwtazgkp1ojs'
+const orcidTopBread = '0x222c22737562223a22'
+const orcidBottomBread = '0x222c22617574685f74696d65223a'
 // describe('Integration test 2', function () {
 //   it('Go through full process and make sure it success with a correct JWT', async function () {
 //     const [owner, addr1] = await ethers.getSigners()
@@ -42,7 +45,7 @@ const keccak256FromString = x => ethers.utils.keccak256(ethers.utils.toUtf8Bytes
 describe('slicing of byte array', function (){
   before(async function(){
     [this.owner] = await ethers.getSigners();
-    this.vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(11,59, '0x222c22737562223a22', '0x222c22617574685f74696d65223a')
+    this.vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(11,59, orcidKid, orcidTopBread, orcidBottomBread)
   });
 
   it('slicing raw bytes gives correct result', async function () {
@@ -67,7 +70,7 @@ describe('slicing of byte array', function (){
 describe('type conversion and cryptography', function (){
   before(async function(){
     [this.owner] = await ethers.getSigners();
-    this.vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(11,59, '0x222c22737562223a22', '0x222c22617574685f74696d65223a')
+    this.vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(11,59, orcidKid, orcidTopBread, orcidBottomBread)
     this.message = 'Hey'
   });
 
@@ -81,7 +84,7 @@ describe('type conversion and cryptography', function (){
 describe('modExp works', function () {
   it('Test modExp on some simple numbers', async function () {
     const [owner] = await ethers.getSigners();
-    let vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(58,230, '0x222c22737562223a22', '0x222c22617574685f74696d65223a')
+    let vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(58,230, orcidKid, orcidTopBread, orcidBottomBread)
     await expect(vjwt.modExp(0x004b,1,8001)).to.emit(vjwt, 'modExpEventForTesting').withArgs('0x004b');
     await expect(vjwt.modExp(5,5,5)).to.emit(vjwt, 'modExpEventForTesting').withArgs('0x00');
     await expect(vjwt.modExp(0,1,6)).to.emit(vjwt, 'modExpEventForTesting').withArgs('0x00');
@@ -101,7 +104,7 @@ describe('Verify test RSA signatures', function () {
       ethers.BigNumber.from(Buffer.from(pubkey.keys[0]['e'], 'base64url')), 
       Buffer.from(pubkey.keys[0]['n'], 'base64url')
     ]
-    let vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(e,n, '0x222c22737562223a22', '0x222c22617574685f74696d65223a');
+    let vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(e,n, orcidKid, orcidTopBread, orcidBottomBread);
 
     await expect(vjwt['verifyJWT(bytes,string)'](ethers.BigNumber.from(signature), headerRaw + '.' + payloadRaw)).to.emit(vjwt, 'JWTVerification').withArgs(true);
     // make sure it doesn't work with wrong JWT or signature:
@@ -114,7 +117,7 @@ describe('Verify test RSA signatures', function () {
 describe('proof of prior knowledge', function () {
   beforeEach(async function(){
     [this.owner, this.addr1] = await ethers.getSigners();
-    this.vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(11,230, '0x222c22737562223a22', '0x222c22617574685f74696d65223a')
+    this.vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(11,230, orcidKid, orcidTopBread, orcidBottomBread)
     this.message1 = 'Hey'
     this.message2 = 'Hey2'
     // Must use two unique hashing algorithms
@@ -166,7 +169,7 @@ async function sandwichIDWithBreadFromContract(id, contract){
 
 describe('Frontend sandwiching', function(){
   it('Test that correct sandwich is given for a specific ID', async function(){
-    let vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(50,100, '0x222c22737562223a22', '0x222c22617574685f74696d65223a');
+    let vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(50,100, orcidKid, orcidTopBread, orcidBottomBread);
     expect(await sandwichIDWithBreadFromContract('0000-0002-2308-9517', vjwt)).to.equal('222c22737562223a22303030302d303030322d323330382d39353137222c22617574685f74696d65223a');
   });
 });
@@ -189,7 +192,7 @@ describe('Integration tests for after successful proof commit', function () {
       Buffer.from(pubkey.keys[0]['n'], 'base64url')
     ]
 
-    this.vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(e,n, '0x222c22737562223a22', '0x222c22617574685f74696d65223a');
+    this.vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(e,n, orcidKid, orcidTopBread, orcidBottomBread);
     this.message = headerRaw + '.' + payloadRaw
     this.payloadIdx = Buffer.from(headerRaw).length + 1 //Buffer.from('.').length == 1
     this.sandwich = await sandwichIDWithBreadFromContract('0000-0002-2308-9517', this.vjwt);
@@ -276,7 +279,7 @@ describe('Anonymous proof commit', function () {
       Buffer.from(pubkey.keys[0]['n'], 'base64url')
     ]
 
-    this.vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(e,n, '0x222c22737562223a22', '0x222c22617574685f74696d65223a');
+    this.vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(e,n, orcidKid, orcidTopBread, orcidBottomBread);
     this.message = sha256FromString(headerRaw + '.' + payloadRaw)
     this.payloadIdx = Buffer.from(headerRaw).length + 1 //Buffer.from('.').length == 1
     this.sandwich = await sandwichIDWithBreadFromContract('0000-0002-2308-9517', this.vjwt);

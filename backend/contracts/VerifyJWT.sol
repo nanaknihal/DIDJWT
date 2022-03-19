@@ -27,6 +27,11 @@ contract VerifyJWT {
     // web2 server's RS256 public key, split into exponent and modulus
     uint256 public e;
     bytes public n;
+    // kid of JWT (available at JWKS endpoint). It is common for a JWKS endpoint to have multiple keys, so they kid is used to match with the correct key. 
+    // the kid field also allays problems due to key rotation, if the frontend checks that the kid matches that of the JWT before submitting, it saves the user gas
+    // by never lettign them accidentally submit to a contract with an outdated publickey
+    string public kid;
+
      // It would be very difficult to index people based on their base64url-encoded JWTs. Having a plaintext ID, such as an email address is needed. How can we do this? 
     // Allow the user to select a string within t heir JWT to be indexed by
     // how the id fields start and ed. For example, one web2 service may have IDs in the token as '"userID" : "vitalik.eth", "iat" : ...' 
@@ -50,10 +55,11 @@ contract VerifyJWT {
     bytes emptyBytes;
     bytes32 immutable emptyBytesHash;
     // exponent and modulus comrpise the RSA public key of the web2 authenticator which signed the JWT. 
-    constructor(uint256 exponent_, bytes memory modulus_, bytes memory bottomBread_, bytes memory topBread_){
+    constructor(uint256 exponent_, bytes memory modulus_, string memory kid_, bytes memory bottomBread_, bytes memory topBread_){
       emptyBytesHash = keccak256(emptyBytes);
       e = exponent_;
       n = modulus_;
+      kid = kid_;
       topBread = topBread_; 
       bottomBread = bottomBread_;
     } 

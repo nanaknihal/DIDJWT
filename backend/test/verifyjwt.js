@@ -13,7 +13,7 @@ const orcidTopBread = '0x222c22617574685f74696d65223a'
 
 const googleKid = '729189450d49028570425266f03e737f45af2932'
 const googleBottomBread = '0x222c22656d61696c223a22'
-const googleTopBread = '222c22656d61696c5f7665726966696564223a'
+const googleTopBread = '0x222c22656d61696c5f7665726966696564223a'
 
 // Converts JWKS RSAkey to e and n:
 const jwksKeyToPubkey = (jwks) => {

@@ -10,6 +10,20 @@ const keccak256FromString = x => ethers.utils.keccak256(ethers.utils.toUtf8Bytes
 const orcidKid = '7hdmdswarosg3gjujo8agwtazgkp1ojs'
 const orcidTopBread = '0x222c22737562223a22'
 const orcidBottomBread = '0x222c22617574685f74696d65223a'
+
+// Converts JWKS RSAkey to e and n:
+const jwksKeyToPubkey = (jwks) => {
+  let parsed = JSON.parse(jwks)
+  return [
+    ethers.BigNumber.from(Buffer.from(parsed['e'], 'base64url')), 
+    ethers.BigNumber.from(Buffer.from(parsed['n'], 'base64url'))
+  ]
+}
+
+const [e, n] = jwksKeyToPubkey('{"kty":"RSA","e":"AQAB","use":"sig","kid":"production-orcid-org-7hdmdswarosg3gjujo8agwtazgkp1ojs","n":"jxTIntA7YvdfnYkLSN4wk__E2zf_wbb0SV_HLHFvh6a9ENVRD1_rHK0EijlBzikb-1rgDQihJETcgBLsMoZVQqGj8fDUUuxnVHsuGav_bf41PA7E_58HXKPrB2C0cON41f7K3o9TStKpVJOSXBrRWURmNQ64qnSSryn1nCxMzXpaw7VUo409ohybbvN6ngxVy4QR2NCC7Fr0QVdtapxD7zdlwx6lEwGemuqs_oG5oDtrRuRgeOHmRps2R6gG5oc-JqVMrVRv6F9h4ja3UgxCDBQjOVT1BFPWmMHnHCsVYLqbbXkZUfvP2sO1dJiYd_zrQhi-FtNth9qrLLv3gkgtwQ"}')
+    
+
+
 // describe('Integration test 2', function () {
 //   it('Go through full process and make sure it success with a correct JWT', async function () {
 //     const [owner, addr1] = await ethers.getSigners()
@@ -99,11 +113,7 @@ describe('Verify test RSA signatures', function () {
     orig.split('&').map(x=>{let [key, value] = x.split('='); parsedToJSON[key] = value});
     let [headerRaw, payloadRaw, signatureRaw] = parsedToJSON['id_token'].split('.');
     let [signature, badSignature] = [Buffer.from(signatureRaw, 'base64url'), Buffer.from(signatureRaw.replace('a','b'), 'base64url')]
-    const pubkey = JSON.parse('{"keys":[{"kty":"RSA","e":"AQAB","use":"sig","kid":"production-orcid-org-7hdmdswarosg3gjujo8agwtazgkp1ojs","n":"jxTIntA7YvdfnYkLSN4wk__E2zf_wbb0SV_HLHFvh6a9ENVRD1_rHK0EijlBzikb-1rgDQihJETcgBLsMoZVQqGj8fDUUuxnVHsuGav_bf41PA7E_58HXKPrB2C0cON41f7K3o9TStKpVJOSXBrRWURmNQ64qnSSryn1nCxMzXpaw7VUo409ohybbvN6ngxVy4QR2NCC7Fr0QVdtapxD7zdlwx6lEwGemuqs_oG5oDtrRuRgeOHmRps2R6gG5oc-JqVMrVRv6F9h4ja3UgxCDBQjOVT1BFPWmMHnHCsVYLqbbXkZUfvP2sO1dJiYd_zrQhi-FtNth9qrLLv3gkgtwQ"}]}')
-    const [e, n] = [
-      ethers.BigNumber.from(Buffer.from(pubkey.keys[0]['e'], 'base64url')), 
-      Buffer.from(pubkey.keys[0]['n'], 'base64url')
-    ]
+
     let vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(e,n, orcidKid, orcidTopBread, orcidBottomBread);
 
     await expect(vjwt['verifyJWT(bytes,string)'](ethers.BigNumber.from(signature), headerRaw + '.' + payloadRaw)).to.emit(vjwt, 'JWTVerification').withArgs(true);
@@ -186,11 +196,6 @@ describe('Integration tests for after successful proof commit', function () {
     // let [header, payload] = [headerRaw, payloadRaw].map(x => JSON.parse(atob(x)));
     // let payload = atob(payloadRaw);
     this.signature = Buffer.from(signatureRaw, 'base64url')
-    const pubkey = JSON.parse('{"keys":[{"kty":"RSA","e":"AQAB","use":"sig","kid":"production-orcid-org-7hdmdswarosg3gjujo8agwtazgkp1ojs","n":"jxTIntA7YvdfnYkLSN4wk__E2zf_wbb0SV_HLHFvh6a9ENVRD1_rHK0EijlBzikb-1rgDQihJETcgBLsMoZVQqGj8fDUUuxnVHsuGav_bf41PA7E_58HXKPrB2C0cON41f7K3o9TStKpVJOSXBrRWURmNQ64qnSSryn1nCxMzXpaw7VUo409ohybbvN6ngxVy4QR2NCC7Fr0QVdtapxD7zdlwx6lEwGemuqs_oG5oDtrRuRgeOHmRps2R6gG5oc-JqVMrVRv6F9h4ja3UgxCDBQjOVT1BFPWmMHnHCsVYLqbbXkZUfvP2sO1dJiYd_zrQhi-FtNth9qrLLv3gkgtwQ"}]}')
-    const [e, n] = [
-      ethers.BigNumber.from(Buffer.from(pubkey.keys[0]['e'], 'base64url')), 
-      Buffer.from(pubkey.keys[0]['n'], 'base64url')
-    ]
 
     this.vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(e,n, orcidKid, orcidTopBread, orcidBottomBread);
     this.message = headerRaw + '.' + payloadRaw
@@ -273,12 +278,6 @@ describe('Anonymous proof commit', function () {
     // let [header, payload] = [headerRaw, payloadRaw].map(x => JSON.parse(atob(x)));
     // let payload = atob(payloadRaw);
     this.signature = Buffer.from(signatureRaw, 'base64url')
-    const pubkey = JSON.parse('{"keys":[{"kty":"RSA","e":"AQAB","use":"sig","kid":"production-orcid-org-7hdmdswarosg3gjujo8agwtazgkp1ojs","n":"jxTIntA7YvdfnYkLSN4wk__E2zf_wbb0SV_HLHFvh6a9ENVRD1_rHK0EijlBzikb-1rgDQihJETcgBLsMoZVQqGj8fDUUuxnVHsuGav_bf41PA7E_58HXKPrB2C0cON41f7K3o9TStKpVJOSXBrRWURmNQ64qnSSryn1nCxMzXpaw7VUo409ohybbvN6ngxVy4QR2NCC7Fr0QVdtapxD7zdlwx6lEwGemuqs_oG5oDtrRuRgeOHmRps2R6gG5oc-JqVMrVRv6F9h4ja3UgxCDBQjOVT1BFPWmMHnHCsVYLqbbXkZUfvP2sO1dJiYd_zrQhi-FtNth9qrLLv3gkgtwQ"}]}')
-    const [e, n] = [
-      ethers.BigNumber.from(Buffer.from(pubkey.keys[0]['e'], 'base64url')), 
-      Buffer.from(pubkey.keys[0]['n'], 'base64url')
-    ]
-
     this.vjwt = await (await ethers.getContractFactory('VerifyJWT')).deploy(e,n, orcidKid, orcidTopBread, orcidBottomBread);
     this.message = sha256FromString(headerRaw + '.' + payloadRaw)
     this.payloadIdx = Buffer.from(headerRaw).length + 1 //Buffer.from('.').length == 1

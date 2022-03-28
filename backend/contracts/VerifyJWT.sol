@@ -356,7 +356,7 @@ contract VerifyJWT {
     privateJWTAllowances[msg.sender][viewer] = value;
   }
   // For accessing private credentials on the Lit Protocol
-  function hasAccess(address owner, address viewer) public view returns (bool) {
+  function hasAccess(address owner, address viewer) public view returns (bool result) {
     return privateJWTAllowances[owner][viewer];
   }
 

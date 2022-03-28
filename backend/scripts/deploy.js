@@ -7,7 +7,7 @@ const hre = require("hardhat");
 
 // These constants should be shared dependancy with tests so the same code isn't duplicated across them without a shared module
 const orcidKid = '7hdmdswarosg3gjujo8agwtazgkp1ojs'
-const orcidBotomBread = '0x222c22737562223a22'
+const orcidBottomBread = '0x222c22737562223a22'
 const orcidTopBread = '0x222c22617574685f74696d65223a'
 
 const googleKid = '729189450d49028570425266f03e737f45af2932'
@@ -34,7 +34,7 @@ async function main() {
   // If this script is run directly using `node` you may want to call compile
   // manually to make sure everything is compiled
   // await hre.run('compile');
-  await deployGoogle();
+  await deployORCID();
   // await deployFacebook();
 }
 

@@ -3,7 +3,11 @@ pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
 import "contracts/Base64.sol"; 
-contract VerifyJWT {
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
+contract VerifyJWT is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     // struct JWTProof {
     //   uint256 blockNumber;
     //   bytes32 hashedJWT;
@@ -53,16 +57,24 @@ contract VerifyJWT {
     event KeyAuthorization(bool result_);
     
     bytes emptyBytes;
-    bytes32 immutable emptyBytesHash;
+    bytes32 emptyBytesHash;
+
+    // Initializer rather than constructor so it can be used for proxy pattern
     // exponent and modulus comrpise the RSA public key of the web2 authenticator which signed the JWT. 
-    constructor(uint256 exponent_, bytes memory modulus_, string memory kid_, bytes memory bottomBread_, bytes memory topBread_){
-      emptyBytesHash = keccak256(emptyBytes);
+    function initialize(uint256 exponent_, bytes memory modulus_, string memory kid_, bytes memory bottomBread_, bytes memory topBread_) initializer public {
       e = exponent_;
       n = modulus_;
       kid = kid_;
       topBread = topBread_; 
       bottomBread = bottomBread_;
+
+      emptyBytesHash = keccak256(emptyBytes);
+      // initialze parent classes (part of upgradeable proxy design pattern) 
+      __Ownable_init();
     } 
+
+    // For UUPS upgradeable proxy
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 
     // Why am i putting test functions here haha
     function testAddressByteConversion(address a) public pure returns (bool) {

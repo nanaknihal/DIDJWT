@@ -44,30 +44,10 @@ Once block 1 is finalized,
 5. Link the username or other relevant metadata in the `id_token` to users public key in a final hashmap for verified metadata
 
 
-
-
-
-
-### ORCID Implementation:
-Get authorization code @ 
-https://orcid.org/oauth/authorize?client_id=APP-MPLI0FQRUVFEKMYX&response_type=code&scope=/authenticate&redirect_uri=https://developers.google.com/oauthplayground
-redict_uri can be changed to ur website and the auth code will be in the URL: https://yourwebsite.com?code=auth_code_here
-auth codes can be used only once to generate a token
-Then,
-get auth token via:
-```curl -i -L -k -H 'Accept: application/json' --data 'client_id=APP-MPLI0FQRUVFEKMYX&client_secret=0c2470a1-ab05-457a-930c-487188e658e2&grant_type=authorization_code&redirect_uri=https://developers.google.com/oauthplayground&code=[YOUR AUTH CODE HERE]' https://orcid.org/oauth/token```
-Returns:
-{"access_token":"629abc31-17dd-4202-8e1d-6259fbeea759","token_type":"bearer","refresh_token":"5582cddd-79a6-4406-a1e6-f971bba0ee7d","expires_in":631138518,"scope":"/authenticate","name":"Nanak Nihal Khalsa","orcid":"0000-0002-2308-9517"}
-
-BEFORE YOU SUBMIT TO THE BLOCKCHAIN, MAKE SURE TO INVALIDATE THE ACCESS AND REFRESH TOKEN. This can be done by refresh token rotation, if supported (e.g. OAuth and Okta support it). Google sign in requires going to settings and disabling the app's access (perhaps it be easier soon or already has and I didn't research it enough) 
-
-
-
 ## testnet addresses of JWT verifiers
 ### Polygon
-ORCID: 0x8E68b0751b65D38fe02835c16b191D978b57994a
-FB0: 0x0B5df11E8AB2e00F01093ae52616cCF15B7d12Ff
-FB1: 0xcb9aD9B8f1d642e645C8Dfc7Bcd14B473Cf168BD
+ORCID: 0x2779550E47349711d3CD895aFd8aE315ee9BC597
+GOOGLE: 0x1362fe03c3c338f2e7dfaA44205f2B047f2C430D (no longer functional due to key rotation)
 ### Ropsten
 ORCID: 0xdF10310d2C72F5358b19bF6A7C817Ec4570b270f
 

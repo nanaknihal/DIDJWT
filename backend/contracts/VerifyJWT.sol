@@ -13,7 +13,7 @@ contract VerifyJWT is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     //   bytes32 hashedJWT;
     // }
 
-    // creds are the identifier / index field in the JWT, e.g. ID or email (the rest of the JWT has lots of other information)
+    // creds are the identifier / index field in the JWT, e.g. ORCID ID for ORCID JWT or email for gmail JWT(the rest of the JWT has lots of other information)
     mapping(address => string) public JWTForAddress;
     mapping(string => address) public addressForJWT;
 

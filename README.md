@@ -45,6 +45,7 @@ Once block 1 is finalized,
 ## testnet addresses of JWT verifiers
 ### Polygon
 ORCID: 0x2779550E47349711d3CD895aFd8aE315ee9BC597
+
 GOOGLE: 0x1362fe03c3c338f2e7dfaA44205f2B047f2C430D (no longer functional due to key rotation)
 ### Ropsten
 ORCID: 0xdF10310d2C72F5358b19bF6A7C817Ec4570b270f

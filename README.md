@@ -10,10 +10,10 @@ Verify a JWT on-chain without compromising user security
 Youtube video about the protocol https://youtu.be/MmR9bhULpxE
 ### Insecure, simple way:
 
-1. Request an `id_token` (NOT an `acces_token` which would grant priviliges and should not be shared)
+1. Request an `id_token` or a `access_token`. It is good to understand the differences between the two; ID tokens are for authentication and access tokens are for authorization. ID tokens identify you and access tokens let you actually do actions specified in the scope. If using access token, make sure to expire it before submitting on-chain. And ideally, make the scope extremely limited as a safety measure in case a still-valid access token is somehow shared.
 2. Invalidate `id_token` by requesting a new one (if possible)
 3. Send the `id_token` to a smart contract
-4. Smart contract then writes checks that the `id_token` is signed by the authority (e.g., using EIP-198 for RSA, or OpenZeppelin ECDSA for ECDSA). If it is, it writes it to a `mapping (address => string)`, verifying  that the address who submitted the transaction owns the `id_token`
+4. Smart contract then writes checks that the `id_token` is signed by the authority (e.g., using EIP-198 for RSA). If it is, it writes it to a `mapping (address => string)`, verifying  that the address who submitted the transaction owns the `id_token`
 
 This is prone to front-running; the access token is in the mempool and can be submitted from another address, authenticating the other address as the original user
 
@@ -27,8 +27,8 @@ Two-block transaction so it cannot be front-run
 
 **Block 1**
 
-2. Send the `keccak256(my_eth_pubkey + id_token)` to a smart contract (+ meaning append)
-3. Smart contract stores this in a `mapping(address => string) private hidden_jwts;` of Ethereum public keys to hashed `pubkey + id_token`s
+2. Send the proof, `sha256(my_eth_pubkey ^ sha256(jwt))`, to a smart contract's `commitJWTProof` (here, + means XOR, i.e. bitwise addition modulo 2)
+3. Smart contract stores this in a `mapping(bytes32 => uint) private proofToBlock` matching the proof to the current blocknumber
 
 This is used to prove that the user knew the JWT at the time of this block, without revealing the JWT
 
@@ -36,12 +36,10 @@ This is used to prove that the user knew the JWT at the time of this block, with
 Once block 1 is finalized,
 
 **Block 2**
-
-1. Invalidate the `id_token` by requesting a new token (if supported)
-2. Send `id_token` to smart contract
-3. Smart contract appends sender's pubkey to `id_token`, then computes `keccak256(my_eth_pubkey + id_token)`, then compares that looks that value up in the `hidden_jwts`. If it exist, you know the user owned `id_token`. If so,
-4. Like in the insecure version, verify `id_token`'s signature comes from the centralized server's public key. Then, if so
-5. Link the username or other relevant metadata in the `id_token` to users public key in a final hashmap for verified metadata
+1. Send JWT to smart contract
+2. Smart contract can now reconstruct the proof `sha256(msg.sender ^ sha256(jwt))` to check whether it was known at a previous block number. It does this by looking up the blocknumber of `proofToBlock`. If the proof was given in a previous block, 
+3. Like in the insecure version, it verifies that the signature is from the centralized server's public key. Then, if so
+4. Link the username in the JWT to users public key in a final hashmap for verified username.
 
 
 ## testnet addresses of JWT verifiers

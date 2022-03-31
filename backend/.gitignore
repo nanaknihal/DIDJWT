@@ -1,5 +1,6 @@
 node_modules
 .env
+.nvmrc
 coverage
 coverage.json
 typechain

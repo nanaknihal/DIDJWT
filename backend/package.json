@@ -19,8 +19,10 @@
     "hardhat": "^2.8.4"
   },
   "dependencies": {
+    "@openzeppelin/contracts": "^4.5.0",
     "@openzeppelin/contracts-upgradeable": "^4.5.2",
     "base64-sol": "^1.0.1",
+    "dotenv": "^16.0.0",
     "hardhat-abi-exporter": "^2.8.0",
     "i": "^0.3.7",
     "npm": "^8.5.1",

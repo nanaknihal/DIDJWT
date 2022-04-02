@@ -23,7 +23,7 @@ contract IdentityAggregator is Ownable  {
     /// @notice Add support for a new VerifyJWT contract.
     /// @param keyword The string used to denote the source of the JWT (e.g., "twitter").
     /// @param contractAddress The address of the JWT contract to be supported.
-    function addVerifyJWTContract(string memory keyword, address contractAddress) public onlyOwner {
+    function addVerifyJWTContract(string calldata keyword, address contractAddress) public onlyOwner {
         // Require that neither this keyword nor this contract has been added
         require(bytes(keywordForKeyword[keyword]).length == 0);
         require(contractAddrForKeyword[keyword] == address(0));
@@ -37,7 +37,7 @@ contract IdentityAggregator is Ownable  {
 
     /// @notice Remove support for a VerifyJWT contract.
     /// @param keyword The string used to lookup the contract.
-    function removeSupportFor(string memory keyword) public onlyOwner {
+    function removeSupportFor(string calldata keyword) public onlyOwner {
         require(contractAddrForKeyword[keyword] != address(0), "There is no corresponding contract for this keyword.");
         
         for (uint i = 0; i < keywords.length; i++) {

@@ -33,7 +33,7 @@ describe("IdentityAggregator", function () {
     
     it("Should be updated when support for a new contract is added", async function () {
       const keyword = 'orcid';
-      await this.idAggregator.addPlatformContract(keyword, "0xABCDEF1234567890ABCDEF1234567890ABCDEF12");
+      await this.idAggregator.addVerifyJWTContract(keyword, "0xABCDEF1234567890ABCDEF1234567890ABCDEF12");
       expect(await this.idAggregator.getKeywords()).to.have.members([keyword]);
     });
   });
@@ -54,7 +54,7 @@ describe("IdentityAggregator", function () {
       vjwt = await deployVerifyJWTContract(11, 59, orcidKid, orcidBotomBread, orcidTopBread);
 
       const keyword = "orcid";
-      await idAggregator.addPlatformContract(keyword, vjwtAddress);
+      await idAggregator.addVerifyJWTContract(keyword, vjwtAddress);
 
       const verifyJWTAddress = await idAggregator.callStatic.contractAddrForKeyword(keyword);
       expect(verifyJWTAddress).to.equal(vjwtAddress);
@@ -95,7 +95,7 @@ describe("IdentityAggregator", function () {
       await vjwt.verifyMe(ethers.BigNumber.from(signature), message, payloadIdx, startIdx, endIdx, '0x'+sandwich);
       
       const keyword = "orcid";
-      await idAggregator.addPlatformContract(keyword, vjwtAddress);
+      await idAggregator.addVerifyJWTContract(keyword, vjwtAddress);
 
       const allAccounts = await idAggregator.callStatic.getAllAccounts(owner.address);
       const creds = hexToString(allAccounts[0]);

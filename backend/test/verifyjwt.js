@@ -1,6 +1,6 @@
 const { expect } = require('chai');
 const { ethers, upgrades } = require('hardhat');
-const search64 = require('/Users/nnsk/Desktop/ethdenver/whoisthis.wtf-frontend/src/searchForPlaintextInBase64.js');
+const search64 = require('../../../whoisthis.wtf-frontend/src/searchForPlaintextInBase64.js');
 
 // input: x (string); output: keccak256 of string
 const sha256FromString = x => ethers.utils.sha256(ethers.utils.toUtf8Bytes(x))

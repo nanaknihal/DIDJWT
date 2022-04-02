@@ -1,5 +1,7 @@
 const { ethers } = require('hardhat');
 
+exports.vmExceptionStr = 'VM Exception while processing transaction: reverted with reason string ';
+
 exports.orcidKid = '7hdmdswarosg3gjujo8agwtazgkp1ojs';
 exports.orcidBotomBread = '0x222c22737562223a22';
 exports.orcidTopBread = '0x222c22617574685f74696d65223a';

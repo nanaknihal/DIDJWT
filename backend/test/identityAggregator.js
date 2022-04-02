@@ -6,6 +6,7 @@ const search64 = require('../../../whoisthis.wtf-frontend/src/searchForPlaintext
 // import { fixedBufferXOR as xor, sandwichIDWithBreadFromContract, padBase64, hexToString, searchForPlainTextInBase64 } from 'wtfprotocol-helpers';
 const { hexToString } = require('wtfprotocol-helpers');
 const {
+  vmExceptionStr,
   orcidKid, orcidBotomBread, orcidTopBread,
   deployVerifyJWTContract,
   deployIdAggregator,
@@ -17,29 +18,57 @@ const {
 // chai.use(solidity);
 
 
-describe("IdentityAggregator", function () {
+describe.only("IdentityAggregator", function () {
 
   describe("keywords", function () {
-
     before(async function () {
-      const IdentityAggregator = await ethers.getContractFactory("IdentityAggregator");
-      this.idAggregator = await IdentityAggregator.deploy();
-      await this.idAggregator.deployed();
+      this.idAggregator = await deployIdAggregator();
     });
 
     it("Should be empty when contract is deployed", async function () {
       expect(await this.idAggregator.getKeywords()).to.be.an('array').that.is.empty;
     });
     
-    it("Should be updated when support for a new contract is added", async function () {
+    it("Should include 'orcid' after support for orcid contract is added", async function () {
       const keyword = 'orcid';
-      await this.idAggregator.addVerifyJWTContract(keyword, "0xABCDEF1234567890ABCDEF1234567890ABCDEF12");
-      expect(await this.idAggregator.getKeywords()).to.have.members([keyword]);
+      await this.idAggregator.addVerifyJWTContract(keyword, "0x100DEF1234567890ABCDEF1234567890ABCDE001");
+      expect(await this.idAggregator.getKeywords()).to.include(keyword);
     });
+    
+    it("Should include 'google' after support for google contract is added", async function () {
+      const keyword = 'google';
+      await this.idAggregator.addVerifyJWTContract(keyword, "0x200DEF1234567890ABCDEF1234567890ABCDE002");
+      expect(await this.idAggregator.getKeywords()).to.include(keyword);
+    });
+
+    it("Should include both 'orcid' and 'google'", async function () {
+      const keywords = ['orcid', 'google'];
+      expect(await this.idAggregator.getKeywords()).to.have.members(keywords);
+    });
+
+    // Test deletion
+    it("Should not include 'orcid' after support for orcid contract is removed", async function () {
+      const keyword = 'orcid';
+      await this.idAggregator.removeSupportFor(keyword);
+      expect(await this.idAggregator.getKeywords()).to.not.include(keyword);
+    });
+
+    it("Should not include 'google' after support for google contract is removed", async function () {
+      const keyword = 'google';
+      await this.idAggregator.removeSupportFor(keyword);
+      expect(await this.idAggregator.getKeywords()).to.not.include(keyword);
+    });
+
+    // Test addition after deletion
+    it("Should include 'twitter' after support for twitter contract is added", async function () {
+      const keyword = 'twitter';
+      await this.idAggregator.addVerifyJWTContract(keyword, "0x300DEF1234567890ABCDEF1234567890ABCDE003");
+      expect(await this.idAggregator.getKeywords()).to.include(keyword);
+    });
+
   });
 
   describe("contractAddrForKeyword", function () {
-    
     it("Should be updated when support for a new contract is added", async function () {
       const idAggregator = await deployIdAggregator();
       const [owner] = await ethers.getSigners();
@@ -58,6 +87,35 @@ describe("IdentityAggregator", function () {
 
       const verifyJWTAddress = await idAggregator.callStatic.contractAddrForKeyword(keyword);
       expect(verifyJWTAddress).to.equal(vjwtAddress);
+    });
+  });
+
+  describe("addVerifyJWTContract", function () {
+    before(async function () {
+      this.idAggregator = await deployIdAggregator();
+    });
+
+    it("Should revert when attempting to use the keyword of an already supported contract", async function () {
+      const keyword = 'twitter';
+      addr = '0x100DEF1234567890ABCDEF1234567890ABCDE001';
+      await this.idAggregator.addVerifyJWTContract(keyword, addr);
+      addr = '0x200DEF1234567890ABCDEF1234567890ABCDE002';
+      const funcStr = 'addVerifyJWTContract(string,address)';
+      await expect(this.idAggregator[funcStr](keyword, addr)).to.be.revertedWith(vmExceptionStr + "'This keyword is already being used'");
+    });
+  });
+
+  describe("removeSupportFor", async function () {
+    // Try to remove an unsupported contract
+    it("Should revert ", async function () {
+      const idAggregator = await deployIdAggregator()
+      keyword = 'twitter';
+      await idAggregator.addVerifyJWTContract(keyword, "0x100DEF1234567890ABCDEF1234567890ABCDE001");
+      expect(await idAggregator.getKeywords()).to.include(keyword);
+
+      keyword = "definitelynotthekeyword";
+      const funcStr = 'removeSupportFor(string)';
+      await expect(idAggregator[funcStr](keyword)).to.be.revertedWith(vmExceptionStr + "'There is no corresponding contract for this keyword'");
     });
   });
 
@@ -105,6 +163,10 @@ describe("IdentityAggregator", function () {
 
       expect(creds).to.equal(correctID);
     });
+
+    // TODO: Test adding google creds and ensuring both orcid and google creds are returned
+
+    // TODO: Test that orcid creds aren't returned after removing support for orcid contract
   });
 
 });

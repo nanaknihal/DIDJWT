@@ -25,8 +25,7 @@ contract IdentityAggregator is Ownable  {
     /// @param contractAddress The address of the JWT contract to be supported.
     function addVerifyJWTContract(string calldata keyword, address contractAddress) public onlyOwner {
         // Require that neither this keyword nor this contract has been added
-        require(bytes(keywordForKeyword[keyword]).length == 0);
-        require(contractAddrForKeyword[keyword] == address(0));
+        require(bytes(keywordForKeyword[keyword]).length == 0, "This keyword is already being used");
 
         keywords.push(keyword);
         keywordForKeyword[keyword] = keyword;

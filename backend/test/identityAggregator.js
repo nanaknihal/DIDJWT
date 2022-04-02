@@ -49,30 +49,20 @@ describe.only("IdentityAggregator", function () {
 
   // TODO: What's the best way to initialize contract variables before all tests, instead of initializing within every test?
 
-  before(async function () {
-    const IdentityAggregator = await ethers.getContractFactory("IdentityAggregator");
-    this.idAggregator = await IdentityAggregator.deploy();
-    await this.idAggregator.deployed();
-  });
-
   describe("keywords", function () {
 
+    before(async function () {
+      const IdentityAggregator = await ethers.getContractFactory("IdentityAggregator");
+      this.idAggregator = await IdentityAggregator.deploy();
+      await this.idAggregator.deployed();
+    });
+
     it("Should be empty when contract is deployed", async function () {
-      // const IdentityAggregator = await ethers.getContractFactory("IdentityAggregator");
-      // const idAggregator = await IdentityAggregator.deploy();
-      // await idAggregator.deployed();
-  
       expect(await this.idAggregator.getKeywords()).to.be.an('array').that.is.empty;
     });
     
     it("Should be updated when support for a new contract is added", async function () {
-
       //--------------------------- Set up context ---------------------------
-
-      // const IdentityAggregator = await ethers.getContractFactory("IdentityAggregator");
-      // const idAggregator = await IdentityAggregator.deploy();
-      // await idAggregator.deployed();
-
       // get mock vjwt contract address
       const [owner] = await ethers.getSigners()
       const transactionCount = await owner.getTransactionCount()
@@ -80,7 +70,6 @@ describe.only("IdentityAggregator", function () {
         from: owner.address,
         nonce: transactionCount
       })
-
       const keyword = 'orcid';
       await this.idAggregator.addPlatformContract(keyword, verifyJWTAddress);
 
@@ -92,7 +81,6 @@ describe.only("IdentityAggregator", function () {
 
   describe("contractAddrForKeyword", function () {
     it("Should be updated when support for a new contract is added", async function () {
-
       //--------------------------- Set up context ---------------------------
 
       const IdentityAggregator = await ethers.getContractFactory("IdentityAggregator");
@@ -121,7 +109,6 @@ describe.only("IdentityAggregator", function () {
 
   describe("getAllAccounts", function () {
     it("Should return array of supported creds", async function() {
-
       //--------------------------- Set up context ---------------------------
 
       const IdentityAggregator = await ethers.getContractFactory("IdentityAggregator");

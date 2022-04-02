@@ -8,14 +8,13 @@ const { hexToString } = require('wtfprotocol-helpers');
 const {
   vmExceptionStr,
   orcidKid, orcidBotomBread, orcidTopBread,
+  googleKid, googleBottomBread, googleTopBread,
   deployVerifyJWTContract,
   deployIdAggregator,
   sha256FromString,
   sandwichIDWithBreadFromContract,
   jwksKeyToPubkey,
 } = require('./utils/utils');
-
-// chai.use(solidity);
 
 
 describe.only("IdentityAggregator", function () {
@@ -120,10 +119,12 @@ describe.only("IdentityAggregator", function () {
   });
 
   describe("getAllAccounts", function () {
-    it("Should return array of supported creds", async function() {
-      //--------------------------- Set up context ---------------------------
+    before(async function () {
+      this.idAggregator = await deployIdAggregator();
+    });
 
-      const idAggregator = await deployIdAggregator();
+    it("Should return array of supported creds, the first of which is the correct orcid", async function() {
+      //--------------------------- Set up context ---------------------------
       const [owner] = await ethers.getSigners();
 
       // get contract address for VerifyJWT
@@ -153,21 +154,82 @@ describe.only("IdentityAggregator", function () {
       await vjwt.verifyMe(ethers.BigNumber.from(signature), message, payloadIdx, startIdx, endIdx, '0x'+sandwich);
       
       const keyword = "orcid";
-      await idAggregator.addVerifyJWTContract(keyword, vjwtAddress);
+      await this.idAggregator.addVerifyJWTContract(keyword, vjwtAddress);
 
-      const allAccounts = await idAggregator.callStatic.getAllAccounts(owner.address);
+      const allAccounts = await this.idAggregator.callStatic.getAllAccounts(owner.address);
       const creds = hexToString(allAccounts[0]);
-      console.log(creds)
 
       //--------------------------- Run test ---------------------------
 
       expect(creds).to.equal(correctID);
     });
 
-    // TODO: Test adding google creds and ensuring both orcid and google creds are returned
+    it("Should return array of supported creds, the second of which is the correct gmail", async function() {
+      //--------------------------- Set up context ---------------------------
+      const [owner] = await ethers.getSigners();
 
-    // TODO: Test that orcid creds aren't returned after removing support for orcid contract
+      // get contract address for VerifyJWT
+      const transactionCount = await owner.getTransactionCount();
+      const vjwtAddress = getContractAddress({
+        from: owner.address,
+        nonce: transactionCount
+      });
+
+      const [eGoogle, nGoogle] = jwksKeyToPubkey('{"alg":"RS256","use":"sig","n":"pFcwF2goSItvLhMJR1u0iPu2HO3wy6SSppmzgISWkRItInbuf2lWdQBt3x45mZsS9eXn6t9lUYnnduO5MrVtA1KoeZhHfSJZysIPh9S7vbU7_mV9SaHSyFPOOZr5jpU2LhNJehWqek7MTJ7FfUp1sgxtnUu-ffrFvMpodUW5eiNMcRmdIrd1O1--WlMpQ8sNk-KVTb8M8KPD0SYz-8kJLAwInUKK0EmxXjnYPfvB9RO8_GLAU7jodmTcVMD25PeA1NRvYqwzpJUYfhAUhPtE_rZX-wxn0udWddDQqihU7T_pTxiZe9R0rI0iAg--pV0f1dYnNfrZaB7veQq_XFfvKw","e":"AQAB","kty":"RSA","kid":"729189450d49028570425266f03e737f45af2932"}')
+      const vjwt = await deployVerifyJWTContract(eGoogle, nGoogle, googleKid, googleBottomBread, googleTopBread);
+
+      // Set up context to call commitJWTProof() and verifyMe()
+      const idToken = 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjcyOTE4OTQ1MGQ0OTAyODU3MDQyNTI2NmYwM2U3MzdmNDVhZjI5MzIiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJhY2NvdW50cy5nb29nbGUuY29tIiwiYXpwIjoiMjU0OTg0NTAwNTY2LTNxaXM1NG1vZmVnNWVkb2dhdWpycDhyYjdwYnA5cXRuLmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwiYXVkIjoiMjU0OTg0NTAwNTY2LTNxaXM1NG1vZmVnNWVkb2dhdWpycDhyYjdwYnA5cXRuLmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwic3ViIjoiMTAwNzg3ODQ0NDczMTcyMjk4NTQzIiwiZW1haWwiOiJuYW5ha25paGFsQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJhdF9oYXNoIjoiMDREZXRTaGNSYUE4OWxlcEQzdWRnUSIsIm5hbWUiOiJOYW5hayBOaWhhbCBLaGFsc2EiLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUFUWEFKdzRnMVA3UFZUS2ZWUU1ldFdtUVgxQlNvWjlPWTRVUWtLcjdsTDQ9czk2LWMiLCJnaXZlbl9uYW1lIjoiTmFuYWsgTmloYWwiLCJmYW1pbHlfbmFtZSI6IktoYWxzYSIsImxvY2FsZSI6ImVuIiwiaWF0IjoxNjQ3NjYzNDk4LCJleHAiOjE2NDc2NjcwOTgsImp0aSI6IjE4ZmRmMGQ2M2VhYjI4YjRlYmY0NmFiMDMzZTM5OTU3NmE5MTJlZGUifQ.YqmOub03zNmloAcFvZE0E-4Gt2Y5fr_9XQLUYqXQ24X_GJaJh0HSQXouJeSXjnk8PT6E1FnPd89QAgwDvE_qxAoOvW7VKDycVapOeDtKdTQ-QpAn-ExE0Pvqgx1iaGRZFDS4DWESX1ZsQIBAB_MHK_ZFdAnOjeFzImuMkB1PZLY99przSaM8AEyvWn8wfEgdmkdoJERBXF7xJI2dfA9mTRjlQvhSC4K060bTJbUYug4sQLrvo53CsDjvXRnodnCB81EVWZUbf5B9dG__kebI3AjedKUcPb2wofpX_B7uAyVlD7Au3APEbZP7Asle0Bi76hDNGPQbLvR_nGWLoySfCQ';
+      const correctID = 'nanaknihal@gmail.com';
+      const [headerRaw, payloadRaw, signatureRaw] = idToken.split('.');
+      const signature = Buffer.from(signatureRaw, 'base64url');
+      const message = headerRaw + '.' + payloadRaw;
+      const payloadIdx = Buffer.from(headerRaw).length + 1; //Buffer.from('.').length == 1
+      const sandwich = await sandwichIDWithBreadFromContract(correctID, vjwt);
+      const [startIdx, endIdx] = search64.searchForPlainTextInBase64(Buffer.from(sandwich, 'hex').toString(), payloadRaw);
+      const hashedMessage = sha256FromString(message);
+      const proof = ethers.utils.sha256(await vjwt.XOR(hashedMessage, owner.address));
+
+      await vjwt.commitJWTProof(proof);
+      await ethers.provider.send('evm_mine');
+      await vjwt.verifyMe(ethers.BigNumber.from(signature), message, payloadIdx, startIdx, endIdx, '0x'+sandwich);
+      
+      const keyword = "google";
+      await this.idAggregator.addVerifyJWTContract(keyword, vjwtAddress);
+
+      const allAccounts = await this.idAggregator.callStatic.getAllAccounts(owner.address);
+      const creds = hexToString(allAccounts[1]);
+
+      //--------------------------- Run test ---------------------------
+
+      expect(creds).to.equal(correctID);
+    });
+
+    it("Should return the correct array of supported creds", async function() {
+      const [owner] = await ethers.getSigners();
+      const allAccounts = await this.idAggregator.callStatic.getAllAccounts(owner.address);
+      const credsArray = allAccounts.map(creds => hexToString(creds));
+
+      expect(credsArray).to.include.members(['nanaknihal@gmail.com', '0000-0002-2308-9517']);
+    });
+
+    it("Should return an array that includes gmail but not orcid", async function() {
+      await this.idAggregator.removeSupportFor('orcid');
+      const [owner] = await ethers.getSigners();
+      const allAccounts = await this.idAggregator.callStatic.getAllAccounts(owner.address);
+      const credsArray = allAccounts.map(creds => hexToString(creds));
+
+      expect(credsArray).to.not.include.members(['0000-0002-2308-9517']);
+    });
+
+    it("Should return an array that includes neither orcid nor gmail", async function() {
+      await this.idAggregator.removeSupportFor('google');
+      const [owner] = await ethers.getSigners();
+      const allAccounts = await this.idAggregator.callStatic.getAllAccounts(owner.address);
+      const credsArray = allAccounts.map(creds => hexToString(creds));
+
+      expect(credsArray).to.not.include.members(['nanaknihal@gmail.com', '0000-0002-2308-9517']);
+    });
   });
 
 });
-

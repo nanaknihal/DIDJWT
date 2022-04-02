@@ -37,7 +37,7 @@ contract IdentityAggregator is Ownable  {
     /// @notice Remove support for a VerifyJWT contract.
     /// @param keyword The string used to lookup the contract.
     function removeSupportFor(string calldata keyword) public onlyOwner {
-        require(contractAddrForKeyword[keyword] != address(0), "There is no corresponding contract for this keyword.");
+        require(contractAddrForKeyword[keyword] != address(0), "There is no corresponding contract for this keyword");
         
         for (uint i = 0; i < keywords.length; i++) {
             if (keccak256(bytes(keywords[i])) == keccak256(bytes(keyword))) {

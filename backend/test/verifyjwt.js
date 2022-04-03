@@ -2,37 +2,20 @@ const { expect } = require('chai');
 const { ethers, upgrades } = require('hardhat');
 const search64 = require('../../../whoisthis.wtf-frontend/src/searchForPlaintextInBase64.js');
 
-// input: x (string); output: keccak256 of string
-const sha256FromString = x => ethers.utils.sha256(ethers.utils.toUtf8Bytes(x))
-// input: x (string); output: sha256 of string
-const keccak256FromString = x => ethers.utils.keccak256(ethers.utils.toUtf8Bytes(x))
+const {
+  orcidKid, orcidBotomBread, orcidTopBread,
+  googleKid, googleBottomBread, googleTopBread,
+  deployVerifyJWTContract,
+  sha256FromString,
+  keccak256FromString,
+  sandwichIDWithBreadFromContract,
+  jwksKeyToPubkey,
+} = require('./utils/utils');
 
-const orcidKid = '7hdmdswarosg3gjujo8agwtazgkp1ojs'
-const orcidBotomBread = '0x222c22737562223a22'
-const orcidTopBread = '0x222c22617574685f74696d65223a'
-
-const googleKid = '729189450d49028570425266f03e737f45af2932'
-const googleBottomBread = '0x222c22656d61696c223a22'
-const googleTopBread = '0x222c22656d61696c5f7665726966696564223a'
-
-// Converts JWKS RSAkey to e and n:
-const jwksKeyToPubkey = (jwks) => {
-  let parsed = JSON.parse(jwks)
-  return [
-    ethers.BigNumber.from(Buffer.from(parsed['e'], 'base64url')), 
-    ethers.BigNumber.from(Buffer.from(parsed['n'], 'base64url'))
-  ]
-}
 
 const [eOrcid, nOrcid] = jwksKeyToPubkey('{"kty":"RSA","e":"AQAB","use":"sig","kid":"production-orcid-org-7hdmdswarosg3gjujo8agwtazgkp1ojs","n":"jxTIntA7YvdfnYkLSN4wk__E2zf_wbb0SV_HLHFvh6a9ENVRD1_rHK0EijlBzikb-1rgDQihJETcgBLsMoZVQqGj8fDUUuxnVHsuGav_bf41PA7E_58HXKPrB2C0cON41f7K3o9TStKpVJOSXBrRWURmNQ64qnSSryn1nCxMzXpaw7VUo409ohybbvN6ngxVy4QR2NCC7Fr0QVdtapxD7zdlwx6lEwGemuqs_oG5oDtrRuRgeOHmRps2R6gG5oc-JqVMrVRv6F9h4ja3UgxCDBQjOVT1BFPWmMHnHCsVYLqbbXkZUfvP2sO1dJiYd_zrQhi-FtNth9qrLLv3gkgtwQ"}')
 const [eGoogle, nGoogle] = jwksKeyToPubkey('{"alg":"RS256","use":"sig","n":"pFcwF2goSItvLhMJR1u0iPu2HO3wy6SSppmzgISWkRItInbuf2lWdQBt3x45mZsS9eXn6t9lUYnnduO5MrVtA1KoeZhHfSJZysIPh9S7vbU7_mV9SaHSyFPOOZr5jpU2LhNJehWqek7MTJ7FfUp1sgxtnUu-ffrFvMpodUW5eiNMcRmdIrd1O1--WlMpQ8sNk-KVTb8M8KPD0SYz-8kJLAwInUKK0EmxXjnYPfvB9RO8_GLAU7jodmTcVMD25PeA1NRvYqwzpJUYfhAUhPtE_rZX-wxn0udWddDQqihU7T_pTxiZe9R0rI0iAg--pV0f1dYnNfrZaB7veQq_XFfvKw","e":"AQAB","kty":"RSA","kid":"729189450d49028570425266f03e737f45af2932"}')
 
-const deployVerifyJWTContract = async (...args) => {
-  let VJWT = await ethers.getContractFactory('VerifyJWT')
-  return await upgrades.deployProxy(VJWT, args, {
-    initializer: 'initialize',
-  });
-}
 
 // describe('Integration test 2', function () {
 //   it('Go through full process and make sure it success with a correct JWT', async function () {
@@ -179,13 +162,6 @@ describe('proof of prior knowledge', function () {
     await expect(this.vjwt['checkJWTProof(address,string)'](this.addr1.address, this.message1)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'Proof not found; it needs to have been submitted to commitJWTProof in a previous block'");
   });
 });
-
-// Make sure it does bottomBread + id + topBread and does not allow any other text in between. If Google changes their JWT format so that the sandwich now contains other fields between bottomBread and topBread, this should fail until the contract is updated. 
-async function sandwichIDWithBreadFromContract(id, contract){
-  let sandwich = (await contract.bottomBread()) + Buffer.from(id).toString('hex') + (await contract.topBread());
-  sandwich = sandwich.replaceAll('0x', '');
-  return sandwich
-}
 
 describe('Frontend sandwiching', function(){
   it('Test that correct sandwich is given for a specific ID', async function(){

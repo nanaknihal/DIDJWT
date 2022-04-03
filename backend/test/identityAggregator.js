@@ -17,7 +17,7 @@ const {
 } = require('./utils/utils');
 
 
-describe.only("IdentityAggregator", function () {
+describe("IdentityAggregator", function () {
 
   describe("keywords", function () {
     before(async function () {

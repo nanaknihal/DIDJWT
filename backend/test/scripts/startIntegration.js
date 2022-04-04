@@ -44,8 +44,13 @@ async function deployVerifyJWT(params) {
     nonce: transactionCount
   });
   // Deploy contract(s)
-  let vjwt = await ethers.getContractFactory('VerifyJWT');
-  await upgrades.deployProxy(vjwt, params, { initializer: 'initialize', });
+  let VerifyJWT = await ethers.getContractFactory('VerifyJWT');
+  const vjwt = await VerifyJWT.deploy();
+  await vjwt.deployed();
+  const contractWithSigner = new ethers.Contract(vjwtAddress, vjwtABI, owner);
+  await contractWithSigner.initialize(...params);
+  // let vjwt = await ethers.getContractFactory('VerifyJWT');
+  // await upgrades.deployProxy(vjwt, params, { initializer: 'initialize', });
   console.log("VerifyJWT deployed to:", vjwtAddress);
   return vjwtAddress;
 }
@@ -83,7 +88,7 @@ async function addContractsToIdAgg(idAggAddr, params) {
       let tx = await contractWithSigner.addVerifyJWTContract(p['service'], p['address']);
       tx.wait();
       console.log('IdentityAggregator: Successfully added support for ' + p['service']);
-      console.log('tx hash: ' + tx.hash);
+      console.log('    tx hash: ' + tx.hash);
     }
     catch (err) {
       console.log(err);

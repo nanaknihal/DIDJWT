@@ -1,4 +1,4 @@
-const { ethers } = require('hardhat');
+const { ethers, upgrades } = require('hardhat');
 
 const search64 = require('../../../../whoisthis.wtf-frontend/src/searchForPlaintextInBase64.js');
 
@@ -13,10 +13,13 @@ exports.googleBottomBread = '0x222c22656d61696c223a22'
 exports.googleTopBread = '0x222c22656d61696c5f7665726966696564223a'
 
 exports.deployVerifyJWTContract = async (...args) => {
-  let VJWT = await ethers.getContractFactory('VerifyJWT')
-  return await upgrades.deployProxy(VJWT, args, {
+  const VerifyJWT = await ethers.getContractFactory('VerifyJWT')
+  const vjwt = await upgrades.deployProxy(VerifyJWT, args, {
+    kind: 'uups',
     initializer: 'initialize',
   });
+  await vjwt.deployed();
+  return vjwt;
 }
 
 exports.deployIdAggregator = async () => {

@@ -7,7 +7,7 @@ const {
 } = require('./utils/utils');
 
 
-describe.only("WTFBios", function () {
+describe("WTFBios", function () {
 
   describe("bioForAddress", function () {
     before(async function () {

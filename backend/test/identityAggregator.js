@@ -7,7 +7,7 @@ const search64 = require('../../../whoisthis.wtf-frontend/src/searchForPlaintext
 const { hexToString } = require('wtfprotocol-helpers');
 const {
   vmExceptionStr,
-  orcidKid, orcidBotomBread, orcidTopBread,
+  orcidKid, orcidBottomBread, orcidTopBread,
   googleKid, googleBottomBread, googleTopBread,
   deployVerifyJWTContract,
   deployIdAggregator,
@@ -79,7 +79,7 @@ describe("IdentityAggregator", function () {
         nonce: transactionCount
       });
 
-      vjwt = await deployVerifyJWTContract(11, 59, orcidKid, orcidBotomBread, orcidTopBread);
+      vjwt = await deployVerifyJWTContract(11, 59, orcidKid, orcidBottomBread, orcidTopBread);
 
       const keyword = "orcid";
       await idAggregator.addVerifyJWTContract(keyword, vjwtAddress);
@@ -135,7 +135,7 @@ describe("IdentityAggregator", function () {
       });
 
       const [eOrcid, nOrcid] = jwksKeyToPubkey('{"kty":"RSA","e":"AQAB","use":"sig","kid":"production-orcid-org-7hdmdswarosg3gjujo8agwtazgkp1ojs","n":"jxTIntA7YvdfnYkLSN4wk__E2zf_wbb0SV_HLHFvh6a9ENVRD1_rHK0EijlBzikb-1rgDQihJETcgBLsMoZVQqGj8fDUUuxnVHsuGav_bf41PA7E_58HXKPrB2C0cON41f7K3o9TStKpVJOSXBrRWURmNQ64qnSSryn1nCxMzXpaw7VUo409ohybbvN6ngxVy4QR2NCC7Fr0QVdtapxD7zdlwx6lEwGemuqs_oG5oDtrRuRgeOHmRps2R6gG5oc-JqVMrVRv6F9h4ja3UgxCDBQjOVT1BFPWmMHnHCsVYLqbbXkZUfvP2sO1dJiYd_zrQhi-FtNth9qrLLv3gkgtwQ"}');
-      const vjwt = await deployVerifyJWTContract(eOrcid, nOrcid, orcidKid, orcidBotomBread, orcidTopBread);
+      const vjwt = await deployVerifyJWTContract(eOrcid, nOrcid, orcidKid, orcidBottomBread, orcidTopBread);
 
       // Set up context to call commitJWTProof() and verifyMe()
       const idToken = 'eyJraWQiOiJwcm9kdWN0aW9uLW9yY2lkLW9yZy03aGRtZHN3YXJvc2czZ2p1am84YWd3dGF6Z2twMW9qcyIsImFsZyI6IlJTMjU2In0.eyJhdF9oYXNoIjoiX1RCT2VPZ2VZNzBPVnBHRWNDTi0zUSIsImF1ZCI6IkFQUC1NUExJMEZRUlVWRkVLTVlYIiwic3ViIjoiMDAwMC0wMDAyLTIzMDgtOTUxNyIsImF1dGhfdGltZSI6MTY0NDgzMDE5MSwiaXNzIjoiaHR0cHM6XC9cL29yY2lkLm9yZyIsImV4cCI6MTY0NDkxODUzNywiZ2l2ZW5fbmFtZSI6Ik5hbmFrIE5paGFsIiwiaWF0IjoxNjQ0ODMyMTM3LCJmYW1pbHlfbmFtZSI6IktoYWxzYSIsImp0aSI6IjcxM2RjMGZiLTMwZTAtNDM0Mi05ODFjLTNlYjJiMTRiODM0OCJ9.VXNSFbSJSdOiX7n-hWB6Vh30L1IkOLiNs2hBTuUDZ4oDB-cL6AJ8QjX7wj9Nj_lGcq1kjIfFLhowo8Jy_mzMGIFU8KTZvinSA-A-tJkXOUEvjUNjd0OfQJnVVJ63wvp9gSEj419HZ13Lc2ci9CRY7efQCYeelvQOQvpdrZsRLiQ_XndeDw2hDLAmI7YrYrLMy1zQY9rD4uAlBa56RVD7me6t47jEOOJJMAs3PC8UZ6pYyNc0zAjQ8Vapqz7gxeCN-iya91YI1AIE8Ut19hGgVRa9N7l-aUielPAlzss0Qbeyvl0KTRuZWnLUSrOz8y9oGxVBCUmStEOrVrAhmkMS8A';

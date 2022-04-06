@@ -1,5 +1,7 @@
 const { ethers } = require('hardhat');
 
+const search64 = require('../../../../whoisthis.wtf-frontend/src/searchForPlaintextInBase64.js');
+
 exports.vmExceptionStr = 'VM Exception while processing transaction: reverted with reason string ';
 
 exports.orcidKid = '7hdmdswarosg3gjujo8agwtazgkp1ojs';
@@ -22,6 +24,13 @@ exports.deployIdAggregator = async () => {
   const idAggregator = await IdentityAggregator.deploy();
   await idAggregator.deployed();
   return idAggregator;
+}
+
+exports.deployWTFBios = async () => {
+  const WTFBios = await ethers.getContractFactory("WTFBios");
+  const wtfBios = await WTFBios.deploy();
+  await wtfBios.deployed();
+  return wtfBios;
 }
 
 // input: x (string); output: keccak256 of string

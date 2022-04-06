@@ -33,26 +33,13 @@ const googleCorrectID = 'nanaknihal@gmail.com';
 
 /**
  * @param params Initialization params for VerifyJWT
- * @return Address of deployed contract
+ * @return Address of deployed contract. Always the proxy address, not the implementation address.
  */
 async function deployVerifyJWT(params) {
-  // Get contract address for VerifyJWT
-  const [owner] = await ethers.getSigners();
-  const transactionCount = await owner.getTransactionCount();
-  const vjwtAddress = getContractAddress({
-    from: owner.address,
-    nonce: transactionCount
-  });
-  // Deploy contract(s)
-  let VerifyJWT = await ethers.getContractFactory('VerifyJWT');
-  const vjwt = await VerifyJWT.deploy();
-  await vjwt.deployed();
-  const contractWithSigner = new ethers.Contract(vjwtAddress, vjwtABI, owner);
-  await contractWithSigner.initialize(...params);
-  // let vjwt = await ethers.getContractFactory('VerifyJWT');
-  // await upgrades.deployProxy(vjwt, params, { initializer: 'initialize', });
-  console.log("VerifyJWT deployed to:", vjwtAddress);
-  return vjwtAddress;
+  const VerifyJWT = await ethers.getContractFactory('VerifyJWT');
+  const vjwt = await upgrades.deployProxy(VerifyJWT, params, { initializer: 'initialize', });
+  console.log('VerifyJWT proxy address: ', vjwt.address)
+  return vjwt.address;
 }
 
 /**

@@ -7,7 +7,7 @@ const {
 } = require('./utils/utils');
 
 
-describe("WTFBios", function () {
+describe.only("WTFBios", function () {
 
   describe("bioForAddress", function () {
     before(async function () {
@@ -17,25 +17,25 @@ describe("WTFBios", function () {
     it("Should return correct bio after user adds bio", async function () {
       const [owner] = await ethers.getSigners();
       const bio = 'Business person';
-      await this.wtfBios.addBio(bio);
+      await this.wtfBios.addNameAndBio('name', bio);
       expect(await this.wtfBios.callStatic.bioForAddress(owner.address)).to.equal(bio);
     });
 
     it("Should return correct bio after user modifies bio", async function () {
       const [owner] = await ethers.getSigners();
       const bio = 'Regular person';
-      await this.wtfBios.modifyBio(bio);
+      await this.wtfBios.modifyNameAndBio('name', bio);
       expect(await this.wtfBios.callStatic.bioForAddress(owner.address)).to.equal(bio);
     });
 
     it("Should return empty string after user removes bio", async function () {
       const [owner] = await ethers.getSigners();
-      await this.wtfBios.removeBio();
+      await this.wtfBios.removeNameAndBio();
       expect(await this.wtfBios.callStatic.bioForAddress(owner.address)).to.equal('');
     });
   });
 
-  describe("addressesWithBios", function () {
+  describe("registeredAddresses", function () {
     before(async function () {
       this.wtfBios = await deployWTFBios();
     });
@@ -43,26 +43,26 @@ describe("WTFBios", function () {
     it("Should return correct array of addresses after users add bios", async function () {
       const [owner, addr1, addr2] = await ethers.getSigners();
       const [bio0, bio1, bio2] = ['Business person', 'Regular person', 'Dog'];
-      await this.wtfBios.connect(owner).addBio(bio0);
-      await this.wtfBios.connect(addr1).addBio(bio1);
-      await this.wtfBios.connect(addr2).addBio(bio2);
-      expect(await this.wtfBios.callStatic.getAddressesWithBios()).to.be.an('array')
+      await this.wtfBios.connect(owner).addNameAndBio('name', bio0);
+      await this.wtfBios.connect(addr1).addNameAndBio('name', bio1);
+      await this.wtfBios.connect(addr2).addNameAndBio('name', bio2);
+      expect(await this.wtfBios.callStatic.getRegisteredAddresses()).to.be.an('array')
       .that.includes.members([owner.address, addr1.address, addr2.address]);
     });
 
     it("Should return correct array of addresses after a user modifies their bio", async function () {
       const [owner, addr1, addr2] = await ethers.getSigners();
-      await this.wtfBios.connect(owner).modifyBio('A completely, totally, utterly, wholly, modified bio');
-      expect(await this.wtfBios.callStatic.getAddressesWithBios()).to.be.an('array')
+      await this.wtfBios.connect(owner).modifyNameAndBio('name', 'A completely, totally, utterly, wholly, modified bio');
+      expect(await this.wtfBios.callStatic.getRegisteredAddresses()).to.be.an('array')
       .that.includes.members([owner.address, addr1.address, addr2.address]);
     });
 
     it("Should return correct array of addresses after a user removes their bio", async function () {
       const [owner, addr1, addr2] = await ethers.getSigners();
-      await this.wtfBios.connect(owner).removeBio();
-      const addressesWithBios = await this.wtfBios.callStatic.getAddressesWithBios();
-      expect(addressesWithBios).to.be.an('array').that.does.not.include(owner.address);
-      expect(addressesWithBios).to.be.an('array').that.includes.members([addr1.address, addr2.address]);
+      await this.wtfBios.connect(owner).removeNameAndBio();
+      const registeredAddresses = await this.wtfBios.callStatic.getRegisteredAddresses();
+      expect(registeredAddresses).to.be.an('array').that.does.not.include(owner.address);
+      expect(registeredAddresses).to.be.an('array').that.includes.members([addr1.address, addr2.address]);
     });
   });
 

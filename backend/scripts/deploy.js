@@ -10,7 +10,7 @@ const orcidKid = 'production-orcid-org-7hdmdswarosg3gjujo8agwtazgkp1ojs'
 const orcidBottomBread = '0x222c22737562223a22'
 const orcidTopBread = '0x222c22617574685f74696d65223a'
 
-const googleKid = '729189450d49028570425266f03e737f45af2932'
+const googleKid = 'f1338ca26835863f671408f41738a7b49e740fc0'
 const googleBottomBread = '0x222c22656d61696c223a22'
 const googleTopBread = '0x222c22656d61696c5f7665726966696564223a'
 
@@ -35,11 +35,13 @@ async function main() {
   // manually to make sure everything is compiled
   // await hre.run('compile');
   await deployORCID();
+  await deployGoogle();
   // await deployFacebook();
 }
 
 async function deployGoogle(){
-  let vjwt = await (await hre.ethers.getContractFactory('VerifyJWT')).deploy(eGoogle, nGoogle, googleKid, googleBottomBread, googleTopBread);
+  let VJWT = await hre.ethers.getContractFactory('VerifyJWT');
+  let vjwt = await hre.upgrades.deployProxy(VJWT, [eGoogle, nGoogle, googleKid, googleBottomBread, googleTopBread]);
   await vjwt.deployed();
   console.log('GOOGLE: ' + vjwt.address);
 }
@@ -50,7 +52,8 @@ async function deployGoogle(){
 // }
 
 async function deployORCID(){
-    let vjwt = await (await hre.ethers.getContractFactory('VerifyJWT')).deploy(eOrcid, nOrcid, orcidKid, orcidBottomBread, orcidTopBread);
+    let VJWT = await hre.ethers.getContractFactory('VerifyJWT');
+    let vjwt = await hre.upgrades.deployProxy(VJWT, [eOrcid, nOrcid, orcidKid, orcidBottomBread, orcidTopBread]);
     await vjwt.deployed();
     console.log('ORCID: ' + vjwt.address);
 }

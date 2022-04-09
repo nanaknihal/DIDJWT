@@ -57,7 +57,7 @@ contract IdentityAggregator is Ownable  {
     /// @notice For user, get creds for every platform designated in keywords.
     /// @param user The address whose creds will be returned.
     /// @return creds A list of creds corresponding to user.
-    function getAllAccounts(address user) public returns (bytes[] memory creds) {
+    function getAllAccounts(address user) public view returns (bytes[] memory creds, string memory name, string memory bio) {
         bytes[] memory allCreds = new bytes[](keywords.length);
         for (uint i = 0; i < keywords.length; i++) {
             if (bytes(keywords[i]).length != 0) {
@@ -69,7 +69,10 @@ contract IdentityAggregator is Ownable  {
                 }
             }
         }
-        return allCreds;
+        WTFBios wtfBios = WTFBios(biosContract);
+        string memory name = wtfBios.nameForAddress(user);
+        string memory bio = wtfBios.bioForAddress(user);
+        return (allCreds, name, bio);
     }
 
     function getKeywords() public view returns (string[] memory) {

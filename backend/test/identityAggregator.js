@@ -11,13 +11,14 @@ const {
   googleKid, googleBottomBread, googleTopBread,
   deployVerifyJWTContract,
   deployIdAggregator,
+  deployWTFBios,
   sha256FromString,
   sandwichIDWithBreadFromContract,
   jwksKeyToPubkey,
 } = require('./utils/utils');
 
 
-describe("IdentityAggregator", function () {
+describe.only("IdentityAggregator", function () {
 
   describe("keywords", function () {
     before(async function () {
@@ -136,6 +137,12 @@ describe("IdentityAggregator", function () {
   describe("getAllAccounts", function () {
     before(async function () {
       this.idAggregator = await deployIdAggregator();
+
+      const [owner] = await ethers.getSigners();
+      [this.name, this.bio] = ['name', 'Business person']
+      this.wtfBios = await deployWTFBios();
+      await this.wtfBios.connect(owner).addNameAndBio(this.name, this.bio);
+      await this.idAggregator.setBiosContractAddress(this.wtfBios.address);
     });
 
     it("Should return array of supported creds, the first of which is the correct orcid", async function() {
@@ -172,7 +179,7 @@ describe("IdentityAggregator", function () {
       await this.idAggregator.addVerifyJWTContract(keyword, vjwtAddress);
 
       const allAccounts = await this.idAggregator.callStatic.getAllAccounts(owner.address);
-      const creds = hexToString(allAccounts[0]);
+      const creds = hexToString(allAccounts['creds'][0]);
 
       //--------------------------- Run test ---------------------------
 
@@ -213,7 +220,7 @@ describe("IdentityAggregator", function () {
       await this.idAggregator.addVerifyJWTContract(keyword, vjwtAddress);
 
       const allAccounts = await this.idAggregator.callStatic.getAllAccounts(owner.address);
-      const creds = hexToString(allAccounts[1]);
+      const creds = hexToString(allAccounts['creds'][1]);
 
       //--------------------------- Run test ---------------------------
 
@@ -223,7 +230,7 @@ describe("IdentityAggregator", function () {
     it("Should return the correct array of supported creds", async function() {
       const [owner] = await ethers.getSigners();
       const allAccounts = await this.idAggregator.callStatic.getAllAccounts(owner.address);
-      const credsArray = allAccounts.map(creds => hexToString(creds));
+      const credsArray = allAccounts['creds'].map(creds => hexToString(creds));
 
       expect(credsArray).to.include.members(['nanaknihal@gmail.com', '0000-0002-2308-9517']);
     });
@@ -232,7 +239,7 @@ describe("IdentityAggregator", function () {
       await this.idAggregator.removeSupportFor('orcid');
       const [owner] = await ethers.getSigners();
       const allAccounts = await this.idAggregator.callStatic.getAllAccounts(owner.address);
-      const credsArray = allAccounts.map(creds => hexToString(creds));
+      const credsArray = allAccounts['creds'].map(creds => hexToString(creds));
 
       expect(credsArray).to.not.include.members(['0000-0002-2308-9517']);
     });
@@ -241,7 +248,7 @@ describe("IdentityAggregator", function () {
       await this.idAggregator.removeSupportFor('google');
       const [owner] = await ethers.getSigners();
       const allAccounts = await this.idAggregator.callStatic.getAllAccounts(owner.address);
-      const credsArray = allAccounts.map(creds => hexToString(creds));
+      const credsArray = allAccounts['creds'].map(creds => hexToString(creds));
 
       expect(credsArray).to.not.include.members(['nanaknihal@gmail.com', '0000-0002-2308-9517']);
     });

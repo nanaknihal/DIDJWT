@@ -5,6 +5,7 @@ import "hardhat/console.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "./VerifyJWT.sol";
+import "./WTFBios.sol";
 
 
 contract IdentityAggregator is Ownable  {
@@ -14,6 +15,8 @@ contract IdentityAggregator is Ownable  {
     mapping(string => string) private keywordForKeyword; // Allows easier lookup for keywords
 
     string[] private keywords; // e.g., "orcid"
+
+    address private biosContract;
 
 
     event AddSupportForContract(string contractKeyword);
@@ -71,6 +74,14 @@ contract IdentityAggregator is Ownable  {
 
     function getKeywords() public view returns (string[] memory) {
         return keywords;
+    }
+
+    function setBiosContractAddress(address biosContract_) public onlyOwner {
+        biosContract = biosContract_;
+    }
+    
+    function getBiosContractAddress() public view returns (address) {
+        return biosContract;
     }
 
 }

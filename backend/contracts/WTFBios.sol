@@ -8,47 +8,52 @@ pragma solidity ^0.8.0;
 contract WTFBios  {
 
     mapping(address => string) public bioForAddress;
+    mapping(address => string) public nameForAddress;
 
-    address[] addressesWithBios;
-
-
-    event AddUserBio(address userAddress);
-    event ModifyUserBio(address userAddress);
-    event RemoveUserBio(address userAddress);
+    address[] registeredAddresses;
 
 
-    /// @notice Add a bio for sender
+    event AddUserNameAndBio(address userAddress);
+    event ModifyUserNameAndBio(address userAddress);
+    event RemoveUserNameAndBio(address userAddress);
+
+
+    /// @notice Add a name and bio for sender
+    /// @param name Example: "Sonny Sonnison"
     /// @param bio Example: "Human being who does activities that humans do"
-    function addBio(string calldata bio) public {
-        require(bytes(bioForAddress[msg.sender]).length == 0, "This address already has a bio. Modify bio with modifyBio()");
+    function addNameAndBio(string calldata name, string calldata bio) public {
+        require(bytes(bioForAddress[msg.sender]).length == 0, "This address is already registered. Modify name and bio with modifyNameAndBio()");
+        nameForAddress[msg.sender] = name;
         bioForAddress[msg.sender] = bio;
-        addressesWithBios.push(msg.sender);
-        emit AddUserBio(msg.sender);
+        registeredAddresses.push(msg.sender);
+        emit AddUserNameAndBio(msg.sender);
     }
 
-    /// @notice Modify sender's bio
+    /// @notice Modify sender's name and bio
     /// @param newBio Example: "Human being who does activities that humans do"
-    function modifyBio(string calldata newBio) public {
-        require(bytes(bioForAddress[msg.sender]).length > 0, "This address does not have a bio to modify. Add bio with addBio()");
+    function modifyNameAndBio(string calldata name, string calldata newBio) public {
+        require(bytes(bioForAddress[msg.sender]).length > 0, "This address does not have a name and bio to modify. Add name and bio with addNameAndBio()");
+        nameForAddress[msg.sender] = name;
         bioForAddress[msg.sender] = newBio;
-        emit ModifyUserBio(msg.sender);
+        emit ModifyUserNameAndBio(msg.sender);
     }
 
-    /// @notice Remove sender's bio
-    function removeBio() public {
-        require(bytes(bioForAddress[msg.sender]).length > 0, "This address does not have a bio to remove");
-        for (uint i = 0; i < addressesWithBios.length; i++) {
-            if (addressesWithBios[i] == msg.sender) {
-                delete addressesWithBios[i];
+    /// @notice Remove sender's name and bio
+    function removeNameAndBio() public {
+        require(bytes(bioForAddress[msg.sender]).length > 0, "This address does not have a name and bio to remove");
+        for (uint i = 0; i < registeredAddresses.length; i++) {
+            if (registeredAddresses[i] == msg.sender) {
+                delete registeredAddresses[i];
+                nameForAddress[msg.sender] = "";
                 bioForAddress[msg.sender] = "";
                 break;
             }
         }
-        emit RemoveUserBio(msg.sender);
+        emit RemoveUserNameAndBio(msg.sender);
     }
 
-    function getAddressesWithBios() public view returns (address[] memory) {
-        return addressesWithBios;
+    function getRegisteredAddresses() public view returns (address[] memory) {
+        return registeredAddresses;
     }
 
 }

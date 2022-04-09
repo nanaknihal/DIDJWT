@@ -67,6 +67,21 @@ describe("IdentityAggregator", function () {
 
   });
 
+  describe("biosContract", function () {
+    before(async function () {
+      this.idAggregator = await deployIdAggregator();
+    });
+
+    it("Should be all zeros when contract is deployed", async function () {
+      expect(await this.idAggregator.getBiosContractAddress()).to.equal('0x0000000000000000000000000000000000000000');
+    });
+    
+    it("Should be updated when setBiosContractAddress is called", async function () {
+      await this.idAggregator.setBiosContractAddress("0x100def1234567890AbCdEf1234567890abCde001");
+      expect(await this.idAggregator.getBiosContractAddress()).to.equal('0x100def1234567890AbCdEf1234567890abCde001');
+    });
+  });
+
   describe("contractAddrForKeyword", function () {
     it("Should be updated when support for a new contract is added", async function () {
       const idAggregator = await deployIdAggregator();

@@ -4,10 +4,12 @@
   "event RemoveSupportForContract(string)",
   "function addVerifyJWTContract(string,address)",
   "function contractAddrForKeyword(string) view returns (address)",
-  "function getAllAccounts(address) returns (bytes[])",
+  "function getAllAccounts(address) view returns (bytes[], string, string)",
+  "function getBiosContractAddress() view returns (address)",
   "function getKeywords() view returns (string[])",
   "function owner() view returns (address)",
   "function removeSupportFor(string)",
   "function renounceOwnership()",
+  "function setBiosContractAddress(address)",
   "function transferOwnership(address)"
 ]

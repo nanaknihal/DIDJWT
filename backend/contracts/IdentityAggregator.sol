@@ -69,10 +69,13 @@ contract IdentityAggregator is Ownable  {
                 }
             }
         }
-        WTFBios wtfBios = WTFBios(biosContract);
-        string memory name = wtfBios.nameForAddress(user);
-        string memory bio = wtfBios.bioForAddress(user);
-        return (allCreds, name, bio);
+        if (biosContract != address(0)) {
+            WTFBios wtfBios = WTFBios(biosContract);
+            string memory name = wtfBios.nameForAddress(user);
+            string memory bio = wtfBios.bioForAddress(user);
+            return (allCreds, name, bio);
+        }
+        return (allCreds, "", "");
     }
 
     function getKeywords() public view returns (string[] memory) {

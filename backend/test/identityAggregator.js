@@ -18,7 +18,7 @@ const {
 } = require('./utils/utils');
 
 
-describe.only("IdentityAggregator", function () {
+describe("IdentityAggregator", function () {
 
   describe("keywords", function () {
     before(async function () {
@@ -141,7 +141,7 @@ describe.only("IdentityAggregator", function () {
       const [owner] = await ethers.getSigners();
       [this.name, this.bio] = ['name', 'Business person']
       this.wtfBios = await deployWTFBios();
-      await this.wtfBios.connect(owner).addNameAndBio(this.name, this.bio);
+      await this.wtfBios.connect(owner).setNameAndBio(this.name, this.bio);
       await this.idAggregator.setBiosContractAddress(this.wtfBios.address);
     });
 

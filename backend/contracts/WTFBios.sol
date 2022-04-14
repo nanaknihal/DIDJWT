@@ -15,20 +15,20 @@ contract WTFBios  {
     // For easy access of registered addresses
     mapping(address => address) addressForAddress; 
 
-    event AddUserNameAndBio(address userAddress);
+    event SetUserNameAndBio(address userAddress);
     event RemoveUserNameAndBio(address userAddress);
 
 
-    /// @notice Add a name and bio for sender. If name and bio already exist, replace them.
+    /// @notice Set a name and bio for sender.
     /// @param name Example: "Sonny Sonnison"
     /// @param bio Example: "Human being who does activities that humans do"
-    function addNameAndBio(string calldata name, string calldata bio) public {
+    function setNameAndBio(string calldata name, string calldata bio) public {
         nameForAddress[msg.sender] = name;
         bioForAddress[msg.sender] = bio;
         if (addressForAddress[msg.sender] == address(0)) {
             registeredAddresses.push(msg.sender);
         }
-        emit AddUserNameAndBio(msg.sender);
+        emit SetUserNameAndBio(msg.sender);
     }
 
     /// @notice Remove sender's name and bio

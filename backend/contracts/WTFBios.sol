@@ -12,30 +12,23 @@ contract WTFBios  {
 
     address[] registeredAddresses;
 
+    // For easy access of registered addresses
+    mapping(address => address) addressForAddress; 
 
     event AddUserNameAndBio(address userAddress);
-    event ModifyUserNameAndBio(address userAddress);
     event RemoveUserNameAndBio(address userAddress);
 
 
-    /// @notice Add a name and bio for sender
+    /// @notice Add a name and bio for sender. If name and bio already exist, replace them.
     /// @param name Example: "Sonny Sonnison"
     /// @param bio Example: "Human being who does activities that humans do"
     function addNameAndBio(string calldata name, string calldata bio) public {
-        require(bytes(bioForAddress[msg.sender]).length == 0, "This address is already registered. Modify name and bio with modifyNameAndBio()");
         nameForAddress[msg.sender] = name;
         bioForAddress[msg.sender] = bio;
-        registeredAddresses.push(msg.sender);
+        if (addressForAddress[msg.sender] == address(0)) {
+            registeredAddresses.push(msg.sender);
+        }
         emit AddUserNameAndBio(msg.sender);
-    }
-
-    /// @notice Modify sender's name and bio
-    /// @param newBio Example: "Human being who does activities that humans do"
-    function modifyNameAndBio(string calldata name, string calldata newBio) public {
-        require(bytes(bioForAddress[msg.sender]).length > 0, "This address does not have a name and bio to modify. Add name and bio with addNameAndBio()");
-        nameForAddress[msg.sender] = name;
-        bioForAddress[msg.sender] = newBio;
-        emit ModifyUserNameAndBio(msg.sender);
     }
 
     /// @notice Remove sender's name and bio
@@ -46,6 +39,7 @@ contract WTFBios  {
                 delete registeredAddresses[i];
                 nameForAddress[msg.sender] = "";
                 bioForAddress[msg.sender] = "";
+                addressForAddress[msg.sender] = address(0);
                 break;
             }
         }

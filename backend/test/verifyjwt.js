@@ -1,38 +1,21 @@
 const { expect } = require('chai');
 const { ethers, upgrades } = require('hardhat');
-const search64 = require('/Users/nnsk/Desktop/ethdenver/whoisthis.wtf-frontend/src/searchForPlaintextInBase64.js');
+const search64 = require('../../../whoisthis.wtf-frontend/src/searchForPlaintextInBase64.js');
 
-// input: x (string); output: keccak256 of string
-const sha256FromString = x => ethers.utils.sha256(ethers.utils.toUtf8Bytes(x))
-// input: x (string); output: sha256 of string
-const keccak256FromString = x => ethers.utils.keccak256(ethers.utils.toUtf8Bytes(x))
+const {
+  orcidKid, orcidBottomBread, orcidTopBread,
+  googleKid, googleBottomBread, googleTopBread,
+  deployVerifyJWTContract,
+  sha256FromString,
+  keccak256FromString,
+  sandwichIDWithBreadFromContract,
+  jwksKeyToPubkey,
+} = require('./utils/utils');
 
-const orcidKid = '7hdmdswarosg3gjujo8agwtazgkp1ojs'
-const orcidBotomBread = '0x222c22737562223a22'
-const orcidTopBread = '0x222c22617574685f74696d65223a'
-
-const googleKid = '729189450d49028570425266f03e737f45af2932'
-const googleBottomBread = '0x222c22656d61696c223a22'
-const googleTopBread = '0x222c22656d61696c5f7665726966696564223a'
-
-// Converts JWKS RSAkey to e and n:
-const jwksKeyToPubkey = (jwks) => {
-  let parsed = JSON.parse(jwks)
-  return [
-    ethers.BigNumber.from(Buffer.from(parsed['e'], 'base64url')), 
-    ethers.BigNumber.from(Buffer.from(parsed['n'], 'base64url'))
-  ]
-}
 
 const [eOrcid, nOrcid] = jwksKeyToPubkey('{"kty":"RSA","e":"AQAB","use":"sig","kid":"production-orcid-org-7hdmdswarosg3gjujo8agwtazgkp1ojs","n":"jxTIntA7YvdfnYkLSN4wk__E2zf_wbb0SV_HLHFvh6a9ENVRD1_rHK0EijlBzikb-1rgDQihJETcgBLsMoZVQqGj8fDUUuxnVHsuGav_bf41PA7E_58HXKPrB2C0cON41f7K3o9TStKpVJOSXBrRWURmNQ64qnSSryn1nCxMzXpaw7VUo409ohybbvN6ngxVy4QR2NCC7Fr0QVdtapxD7zdlwx6lEwGemuqs_oG5oDtrRuRgeOHmRps2R6gG5oc-JqVMrVRv6F9h4ja3UgxCDBQjOVT1BFPWmMHnHCsVYLqbbXkZUfvP2sO1dJiYd_zrQhi-FtNth9qrLLv3gkgtwQ"}')
 const [eGoogle, nGoogle] = jwksKeyToPubkey('{"alg":"RS256","use":"sig","n":"pFcwF2goSItvLhMJR1u0iPu2HO3wy6SSppmzgISWkRItInbuf2lWdQBt3x45mZsS9eXn6t9lUYnnduO5MrVtA1KoeZhHfSJZysIPh9S7vbU7_mV9SaHSyFPOOZr5jpU2LhNJehWqek7MTJ7FfUp1sgxtnUu-ffrFvMpodUW5eiNMcRmdIrd1O1--WlMpQ8sNk-KVTb8M8KPD0SYz-8kJLAwInUKK0EmxXjnYPfvB9RO8_GLAU7jodmTcVMD25PeA1NRvYqwzpJUYfhAUhPtE_rZX-wxn0udWddDQqihU7T_pTxiZe9R0rI0iAg--pV0f1dYnNfrZaB7veQq_XFfvKw","e":"AQAB","kty":"RSA","kid":"729189450d49028570425266f03e737f45af2932"}')
 
-const deployVerifyJWTContract = async (...args) => {
-  let VJWT = await ethers.getContractFactory('VerifyJWT')
-  return await upgrades.deployProxy(VJWT, args, {
-    initializer: 'initialize',
-  });
-}
 
 // describe('Integration test 2', function () {
 //   it('Go through full process and make sure it success with a correct JWT', async function () {
@@ -69,7 +52,7 @@ const deployVerifyJWTContract = async (...args) => {
 describe('slicing of byte array', function (){
   before(async function(){
     [this.owner] = await ethers.getSigners();
-    this.vjwt = await deployVerifyJWTContract(11,59, orcidKid, orcidBotomBread, orcidTopBread)
+    this.vjwt = await deployVerifyJWTContract(11,59, orcidKid, orcidBottomBread, orcidTopBread)
   });
 
   it('slicing raw bytes gives correct result', async function () {
@@ -91,10 +74,33 @@ describe('slicing of byte array', function (){
   });
 });
 
+describe('handleKeyRotation', function (){
+  before(async function(){
+    [this.owner] = await ethers.getSigners();
+    this.initialExponent = 9
+    this.initialModulus = 37
+    this.initialKid = 'someKeyId'
+    this.vjwt = await deployVerifyJWTContract(this.initialExponent, this.initialModulus, this.initialKid, orcidBottomBread, orcidTopBread)
+  });
+
+  it('Should update kid, e, and n', async function () {
+    expect(await this.vjwt.callStatic.kid()).to.equal(this.initialKid)
+    expect(await this.vjwt.callStatic.e()).to.equal(this.initialExponent)
+    expect(parseInt(await this.vjwt.callStatic.n(), 16)).to.equal(this.initialModulus)
+
+    const newE = 11;
+    const newM = 59;
+    await this.vjwt.handleKeyRotation(newE, newM, orcidKid)
+    expect(await this.vjwt.callStatic.kid()).to.equal(orcidKid)
+    expect(await this.vjwt.callStatic.e()).to.equal(newE)
+    expect(parseInt(await this.vjwt.callStatic.n(), 16)).to.equal(newM)
+  });
+});
+
 describe('type conversion and cryptography', function (){
   before(async function(){
     [this.owner] = await ethers.getSigners();
-    this.vjwt = await deployVerifyJWTContract(11,59, orcidKid, orcidBotomBread, orcidTopBread)
+    this.vjwt = await deployVerifyJWTContract(11,59, orcidKid, orcidBottomBread, orcidTopBread)
     this.message = 'Hey'
   });
 
@@ -108,7 +114,7 @@ describe('type conversion and cryptography', function (){
 describe('modExp works', function () {
   it('Test modExp on some simple numbers', async function () {
     const [owner] = await ethers.getSigners();
-    let vjwt = await deployVerifyJWTContract(58,230, orcidKid, orcidBotomBread, orcidTopBread)
+    let vjwt = await deployVerifyJWTContract(58,230, orcidKid, orcidBottomBread, orcidTopBread)
     await expect(vjwt.modExp(0x004b,1,8001)).to.emit(vjwt, 'modExpEventForTesting').withArgs('0x004b');
     await expect(vjwt.modExp(5,5,5)).to.emit(vjwt, 'modExpEventForTesting').withArgs('0x00');
     await expect(vjwt.modExp(0,1,6)).to.emit(vjwt, 'modExpEventForTesting').withArgs('0x00');
@@ -124,7 +130,7 @@ describe('Verify test RSA signatures', function () {
     let [headerRaw, payloadRaw, signatureRaw] = parsedToJSON['id_token'].split('.');
     let [signature, badSignature] = [Buffer.from(signatureRaw, 'base64url'), Buffer.from(signatureRaw.replace('a','b'), 'base64url')]
 
-    let vjwt = await deployVerifyJWTContract(eOrcid, nOrcid, orcidKid, orcidBotomBread, orcidTopBread);
+    let vjwt = await deployVerifyJWTContract(eOrcid, nOrcid, orcidKid, orcidBottomBread, orcidTopBread);
 
     await expect(vjwt['verifyJWT(bytes,string)'](ethers.BigNumber.from(signature), headerRaw + '.' + payloadRaw)).to.emit(vjwt, 'JWTVerification').withArgs(true);
     // make sure it doesn't work with wrong JWT or signature:
@@ -137,7 +143,7 @@ describe('Verify test RSA signatures', function () {
 describe('proof of prior knowledge', function () {
   beforeEach(async function(){
     [this.owner, this.addr1] = await ethers.getSigners();
-    this.vjwt = await deployVerifyJWTContract(11,230, orcidKid, orcidBotomBread, orcidTopBread)
+    this.vjwt = await deployVerifyJWTContract(11,230, orcidKid, orcidBottomBread, orcidTopBread)
     this.message1 = 'Hey'
     this.message2 = 'Hey2'
     // Must use two unique hashing algorithms
@@ -180,16 +186,9 @@ describe('proof of prior knowledge', function () {
   });
 });
 
-// Make sure it does bottomBread + id + topBread and does not allow any other text in between. If Google changes their JWT format so that the sandwich now contains other fields between bottomBread and topBread, this should fail until the contract is updated. 
-async function sandwichIDWithBreadFromContract(id, contract){
-  let sandwich = (await contract.bottomBread()) + Buffer.from(id).toString('hex') + (await contract.topBread());
-  sandwich = sandwich.replaceAll('0x', '');
-  return sandwich
-}
-
 describe('Frontend sandwiching', function(){
   it('Test that correct sandwich is given for a specific ID', async function(){
-    let vjwt = await deployVerifyJWTContract(50,100, orcidKid, orcidBotomBread, orcidTopBread);
+    let vjwt = await deployVerifyJWTContract(50,100, orcidKid, orcidBottomBread, orcidTopBread);
     expect(await sandwichIDWithBreadFromContract('0000-0002-2308-9517', vjwt)).to.equal('222c22737562223a22303030302d303030322d323330382d39353137222c22617574685f74696d65223a');
   });
 });
@@ -200,7 +199,7 @@ for (const params of [
     name : 'orcid',
     idToken: 'eyJraWQiOiJwcm9kdWN0aW9uLW9yY2lkLW9yZy03aGRtZHN3YXJvc2czZ2p1am84YWd3dGF6Z2twMW9qcyIsImFsZyI6IlJTMjU2In0.eyJhdF9oYXNoIjoiX1RCT2VPZ2VZNzBPVnBHRWNDTi0zUSIsImF1ZCI6IkFQUC1NUExJMEZRUlVWRkVLTVlYIiwic3ViIjoiMDAwMC0wMDAyLTIzMDgtOTUxNyIsImF1dGhfdGltZSI6MTY0NDgzMDE5MSwiaXNzIjoiaHR0cHM6XC9cL29yY2lkLm9yZyIsImV4cCI6MTY0NDkxODUzNywiZ2l2ZW5fbmFtZSI6Ik5hbmFrIE5paGFsIiwiaWF0IjoxNjQ0ODMyMTM3LCJmYW1pbHlfbmFtZSI6IktoYWxzYSIsImp0aSI6IjcxM2RjMGZiLTMwZTAtNDM0Mi05ODFjLTNlYjJiMTRiODM0OCJ9.VXNSFbSJSdOiX7n-hWB6Vh30L1IkOLiNs2hBTuUDZ4oDB-cL6AJ8QjX7wj9Nj_lGcq1kjIfFLhowo8Jy_mzMGIFU8KTZvinSA-A-tJkXOUEvjUNjd0OfQJnVVJ63wvp9gSEj419HZ13Lc2ci9CRY7efQCYeelvQOQvpdrZsRLiQ_XndeDw2hDLAmI7YrYrLMy1zQY9rD4uAlBa56RVD7me6t47jEOOJJMAs3PC8UZ6pYyNc0zAjQ8Vapqz7gxeCN-iya91YI1AIE8Ut19hGgVRa9N7l-aUielPAlzss0Qbeyvl0KTRuZWnLUSrOz8y9oGxVBCUmStEOrVrAhmkMS8A',
     correctID : '0000-0002-2308-9517',
-    constructorArgs : [eOrcid, nOrcid, orcidKid, orcidBotomBread, orcidTopBread],
+    constructorArgs : [eOrcid, nOrcid, orcidKid, orcidBottomBread, orcidTopBread],
   },
   {
     name : 'google',
@@ -302,7 +301,7 @@ for (const params of [
 //     // let [header, payload] = [headerRaw, payloadRaw].map(x => JSON.parse(atob(x)));
 //     // let payload = atob(payloadRaw);
 //     this.signature = Buffer.from(signatureRaw, 'base64url')
-//     this.vjwt = await deployVerifyJWTContract(eOrcid, nOrcid, orcidKid, orcidBotomBread, orcidTopBread);
+//     this.vjwt = await deployVerifyJWTContract(eOrcid, nOrcid, orcidKid, orcidBottomBread, orcidTopBread);
 //     this.message = sha256FromString(headerRaw + '.' + payloadRaw)
 //     this.payloadIdx = Buffer.from(headerRaw).length + 1 //Buffer.from('.').length == 1
 //     this.sandwich = await sandwichIDWithBreadFromContract('0000-0002-2308-9517', this.vjwt);

@@ -50,3 +50,12 @@ GOOGLE: 0x1362fe03c3c338f2e7dfaA44205f2B047f2C430D (no longer functional due to 
 ### Ropsten
 ORCID: 0xdF10310d2C72F5358b19bF6A7C817Ec4570b270f
 
+## testnet addresses of IdentityAggregators
+### Polygon
+0xe7d38C12EC231414B49F7cB4695ddAc908F3A852
+
+## testnet addresses of WTFBios
+### Polygon
+0xc45857b71223b6154f6bc488c8c32bD19c21f791
+
+(Deprecated: 0x61786552CD82F41ECf9bA160Ac48616064A70aF8)

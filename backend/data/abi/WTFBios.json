@@ -1,0 +1,9 @@
+[
+  "event RemoveUserNameAndBio(address)",
+  "event SetUserNameAndBio(address)",
+  "function bioForAddress(address) view returns (string)",
+  "function getRegisteredAddresses() view returns (address[])",
+  "function nameForAddress(address) view returns (string)",
+  "function removeNameAndBio()",
+  "function setNameAndBio(string,string)"
+]

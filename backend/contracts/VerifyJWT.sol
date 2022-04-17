@@ -76,6 +76,12 @@ contract VerifyJWT is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     // For UUPS upgradeable proxy
     function _authorizeUpgrade(address) internal override onlyOwner {}
 
+    function handleKeyRotation(uint256 newE, bytes calldata newN, string calldata newKid) public onlyOwner {
+        e = newE;
+        n = newN;
+        kid = newKid;
+    }
+
     // Why am i putting test functions here haha
     function testAddressByteConversion(address a) public pure returns (bool) {
       return bytesToAddress(addressToBytes(a)) == a;

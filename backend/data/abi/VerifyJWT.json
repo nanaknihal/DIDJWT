@@ -25,6 +25,7 @@
   "function e() view returns (uint256)",
   "function getRegisteredAddresses() view returns (address[])",
   "function getRegisteredCreds() view returns (bytes[])",
+  "function handleKeyRotation(uint256,bytes,string)",
   "function hasAccess(address,address) view returns (bool)",
   "function hashFromSignature(uint256,bytes,bytes) returns (bytes32)",
   "function initialize(uint256,bytes,string,bytes,bytes)",

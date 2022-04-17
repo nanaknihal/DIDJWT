@@ -36,9 +36,14 @@ async function main() {
   // manually to make sure everything is compiled
   // await hre.run('compile');
   // await deployIdAggregator();
-  await deployWTFBios();
-  // await deployORCID();
-  // await deployGoogle();
+  const bios = await deployWTFBios();
+  const orcid = await deployORCID();
+  const google = await deployGoogle();
+  const idAgg = await deployIdAggregator();
+
+  idAgg.setBiosContractAddress(bios.address)
+  idAgg.addVerifyJWTContract('orcid', orcid.address)
+  idAgg.addVerifyJWTContract('google', google.address)
   // await deployFacebook();
 }
 
@@ -47,29 +52,33 @@ async function deployWTFBios() {
   const wtfBios = await WTFBios.deploy();
   await wtfBios.deployed();
   console.log('WTFBios: ', wtfBios.address);
+  return wtfBios
 }
 
 async function deployIdAggregator() {
   const IdentityAggregator = await ethers.getContractFactory('IdentityAggregator')
-  const idAggregator = await IdentityAggregator.deploy('0x2779550E47349711d3CD895aFd8aE315ee9BC597', 'orcid');
+  const idAggregator = await IdentityAggregator.deploy();
   await idAggregator.deployed();
   console.log('IdentityAggregator: ', idAggregator.address);
+  return idAggregator
 }
 
 async function deployGoogle() {
   let VJWT = await ethers.getContractFactory('VerifyJWT')
-  await upgrades.deployProxy(VJWT, [eGoogle, nGoogle, googleKid, googleBottomBread, googleTopBread], {
+  let google = await upgrades.deployProxy(VJWT, [eGoogle, nGoogle, googleKid, googleBottomBread, googleTopBread], {
     initializer: 'initialize',
   });
-  console.log('GOOGLE: ' + VJWT.address);
+  console.log('GOOGLE: ' + google.address);
+  return VJWT
 }
 
 async function deployORCID(){
   let VJWT = await ethers.getContractFactory('VerifyJWT')
-  await upgrades.deployProxy(VJWT, [eOrcid, nOrcid, orcidKid, orcidBotomBread, orcidTopBread], {
+  let orcid = await upgrades.deployProxy(VJWT, [eOrcid, nOrcid, orcidKid, orcidBottomBread, orcidTopBread], {
     initializer: 'initialize',
   });
-  console.log('ORCID: ' + VJWT.address);
+  console.log('ORCID: ' + orcid.address);
+  return VJWT
 }
 
 // async function deployGoogle(){
